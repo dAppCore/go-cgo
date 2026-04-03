@@ -82,6 +82,10 @@ int call_c_types_arguments(long a0, unsigned long a1, long long a2, unsigned lon
     return 13;
 }
 
+int call_uintptr_argument(uintptr_t value) {
+    return value == 42 ? 0 : 13;
+}
+
 uintptr_t call_sum_length_ptr(void) {
     return (uintptr_t)&call_sum_length;
 }
@@ -128,6 +132,10 @@ uintptr_t call_buffer_argument_ptr(void) {
 
 uintptr_t call_c_types_arguments_ptr(void) {
     return (uintptr_t)&call_c_types_arguments;
+}
+
+uintptr_t call_uintptr_argument_ptr(void) {
+    return (uintptr_t)&call_uintptr_argument;
 }
 
 */
@@ -195,6 +203,11 @@ func callCTypeArgumentFunction() unsafe.Pointer {
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
 
+func callCUintptrArgumentFunction() unsafe.Pointer {
+	function := C.call_uintptr_argument_ptr()
+	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
+}
+
 func callWithErrnoZero() (int, error) {
 	return WithErrno(func() C.int {
 		return 0
@@ -209,4 +222,8 @@ func callWithErrnoFailure() (int, error) {
 
 func callSupportsCIntegerArguments() error {
 	return Call(callCTypeArgumentFunction(), C.long(10), C.ulong(11), C.longlong(12), C.ulonglong(13))
+}
+
+func callSupportsCUintptrArgument() error {
+	return Call(callCUintptrArgumentFunction(), C.uintptr_t(42))
 }
