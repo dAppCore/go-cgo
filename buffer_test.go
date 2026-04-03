@@ -1,6 +1,9 @@
 package cgo
 
-import "testing"
+import (
+	"testing"
+	"unsafe"
+)
 
 func TestBufferLifecycleAndCopy(t *testing.T) {
 	t.Parallel()
@@ -66,6 +69,39 @@ func TestBufferUseAfterFreePanics(t *testing.T) {
 	assertPanics(t, "use-after-free", func() {
 		_ = buffer.Ptr()
 	})
+}
+
+func TestCStringRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	source := "hello"
+	cString := CString(source)
+	defer Free(unsafe.Pointer(cString))
+
+	converted := GoString(cString)
+	if converted != source {
+		t.Fatalf("expected %q, got %q", source, converted)
+	}
+}
+
+func TestGoStringNilIsEmpty(t *testing.T) {
+	t.Parallel()
+
+	got := GoString(nil)
+	if got != "" {
+		t.Fatalf("expected empty string, got %q", got)
+	}
+}
+
+func TestFreeNilDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Free(nil) panicked: %v", r)
+		}
+	}()
+	Free(nil)
 }
 
 func assertPanics(t *testing.T, want string, fn func()) {
