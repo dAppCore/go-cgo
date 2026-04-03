@@ -71,6 +71,15 @@ func TestBufferUseAfterFreePanics(t *testing.T) {
 	})
 }
 
+func TestBufferIsFreedIsNilSafe(t *testing.T) {
+	t.Parallel()
+
+	var nilBuffer *Buffer
+	if !nilBuffer.IsFreed() {
+		t.Fatal("expected nil buffer to report freed")
+	}
+}
+
 func TestCStringRoundTrip(t *testing.T) {
 	t.Parallel()
 
