@@ -181,6 +181,12 @@ func TestErrnoMapping(t *testing.T) {
 	} else if !errors.Is(err, syscall.Errno(2)) {
 		t.Fatalf("expected error type %v, got %T %v", syscall.Errno(2), err, err)
 	}
+
+	if err := Errno(-2); err == nil {
+		t.Fatal("expected non-nil error for negative errno")
+	} else if !errors.Is(err, syscall.Errno(2)) {
+		t.Fatalf("expected positive errno mapping from -2, got %T %v", err, err)
+	}
 }
 
 func TestWithErrnoReturnsBothResultAndError(t *testing.T) {
