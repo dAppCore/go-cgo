@@ -1,6 +1,8 @@
 package cgo
 
 import (
+	"errors"
+	"syscall"
 	"testing"
 )
 
@@ -48,4 +50,40 @@ func TestCallRejectsUnsupportedInputs(t *testing.T) {
 	assertPanics(t, "unsupported argument count", func() {
 		_ = Call(callFailureFunction(), 1, 2, 3, 4)
 	})
+}
+
+func TestErrnoMapping(t *testing.T) {
+	t.Parallel()
+
+	if err := Errno(0); err != nil {
+		t.Fatalf("expected nil error for zero, got %v", err)
+	}
+
+	if err := Errno(2); err == nil {
+		t.Fatal("expected non-nil error for non-zero errno")
+	} else if !errors.Is(err, syscall.Errno(2)) {
+		t.Fatalf("expected error type %v, got %T %v", syscall.Errno(2), err, err)
+	}
+}
+
+func TestWithErrnoReturnsBothResultAndError(t *testing.T) {
+	t.Parallel()
+
+	result, err := callWithErrnoZero()
+	if result != 0 {
+		t.Fatalf("expected result 0, got %d", result)
+	}
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	result, err = callWithErrnoFailure()
+	if result != 2 {
+		t.Fatalf("expected result 2, got %d", result)
+	}
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	} else if !errors.Is(err, syscall.Errno(2)) {
+		t.Fatalf("expected errno error, got %v", err)
+	}
 }

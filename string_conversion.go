@@ -30,6 +30,7 @@ import "C"
 import (
 	"fmt"
 	"strconv"
+	"syscall"
 	"unsafe"
 )
 
@@ -195,4 +196,27 @@ func Free(ptr unsafe.Pointer) {
 		return
 	}
 	C.free(ptr)
+}
+
+// Errno converts a C error number to a Go error.
+//
+//	rc := cgo.Errno(-2)
+func Errno(rc C.int) error {
+	if rc == 0 {
+		return nil
+	}
+	return syscall.Errno(rc)
+}
+
+// WithErrno runs a function that returns C.int and maps the result to Go error.
+//
+//	result, err := cgo.WithErrno(func() C.int {
+//		return C.my_function()
+//	})
+func WithErrno(fn func() C.int) (int, error) {
+	result := fn()
+	if err := Errno(result); err != nil {
+		return int(result), err
+	}
+	return int(result), nil
 }
