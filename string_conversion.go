@@ -73,10 +73,20 @@ func SizeT(value int) C.size_t {
 //
 //	rc := cgo.Int(returnCode)
 func Int(value int) C.int {
-	if value < -2147483648 || value > 2147483647 {
-		panic("cgo.Int: value exceeds C.int range")
+	cIntBits := cIntBitSize()
+	if cIntBits < strconv.IntSize {
+		maxValue := (int64(1) << (cIntBits - 1)) - 1
+		minValue := -maxValue - 1
+		casted := int64(value)
+		if casted < minValue || casted > maxValue {
+			panic("cgo.Int: value exceeds C.int range")
+		}
 	}
 	return C.int(value)
+}
+
+func cIntBitSize() int {
+	return int(unsafe.Sizeof(C.int(0)) * 8)
 }
 
 // Call invokes a C function pointer and maps a non-zero return into a Go error.

@@ -21,6 +21,38 @@ func TestSizeTAndIntConversions(t *testing.T) {
 	if got := Int(4096); got != 4096 {
 		t.Fatalf("expected Int(4096) to be 4096, got %v", got)
 	}
+
+	cIntBits := cIntBitSize()
+	maxInt := int64(int(^uint(0) >> 1))
+	minInt := -maxInt - 1
+	cIntMax := int64(1)<<(cIntBits-1) - 1
+	cIntMin := -cIntMax - 1
+
+	// Verify exact C.int boundaries for this platform.
+	if cIntMax <= maxInt {
+		got := Int(int(cIntMax))
+		if int(got) != int(cIntMax) {
+			t.Fatalf("expected Int(%d) to be %d, got %v", cIntMax, cIntMax, got)
+		}
+	}
+	if cIntMin >= minInt {
+		got := Int(int(cIntMin))
+		if int(got) != int(cIntMin) {
+			t.Fatalf("expected Int(%d) to be %d, got %v", cIntMin, cIntMin, got)
+		}
+	}
+
+	// Int should panic when value is outside C.int range.
+	if cIntMax < maxInt {
+		assertPanics(t, "value exceeds C.int range", func() {
+			_ = Int(int(cIntMax + 1))
+		})
+	}
+	if cIntMin > minInt {
+		assertPanics(t, "value exceeds C.int range", func() {
+			_ = Int(int(cIntMin - 1))
+		})
+	}
 }
 
 func TestCallWrapsZeroAndNonZeroReturns(t *testing.T) {
