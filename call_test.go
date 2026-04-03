@@ -69,6 +69,8 @@ func TestCallWrapsZeroAndNonZeroReturns(t *testing.T) {
 
 	if err := Call(callFailureFunction()); err == nil {
 		t.Fatalf("expected error, got nil")
+	} else if !errors.Is(err, syscall.Errno(13)) {
+		t.Fatalf("expected errno error for return code 13, got %T %v", err, err)
 	}
 }
 
