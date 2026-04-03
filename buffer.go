@@ -95,6 +95,15 @@ func (b *Buffer) CopyFrom(src []byte) int {
 	return copied
 }
 
+// Close releases the buffer and implements io.Closer.
+//
+//	buffer := NewBuffer(16)
+//	defer buffer.Close()
+func (b *Buffer) Close() error {
+	b.Free()
+	return nil
+}
+
 // Bytes returns the mutable byte slice backed by the buffer memory.
 //
 //	buffer := NewBuffer(4)
