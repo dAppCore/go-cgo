@@ -25,11 +25,16 @@ type Scope struct {
 }
 
 // NewScope creates a zero-value scope for grouped CGo allocations.
+//
+//	scope := NewScope()
+//	defer scope.FreeAll()
 func NewScope() *Scope {
 	return &Scope{}
 }
 
-// Buffer allocates a new managed buffer.
+// Buffer allocates a managed buffer and registers it for scope cleanup.
+//
+//	buffer := scope.Buffer(64)
 func (s *Scope) Buffer(size int) *Buffer {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -43,7 +48,9 @@ func (s *Scope) Buffer(size int) *Buffer {
 	return buffer
 }
 
-// CString allocates a managed C string.
+// CString allocates a managed C string and registers it for scope cleanup.
+//
+//	cString := scope.CString("hello")
 func (s *Scope) CString(value string) *C.char {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -58,6 +65,9 @@ func (s *Scope) CString(value string) *C.char {
 }
 
 // FreeAll releases every allocation created under this scope.
+//
+//	scope := NewScope()
+//	defer scope.FreeAll()
 func (s *Scope) FreeAll() {
 	if s == nil {
 		return
@@ -86,6 +96,8 @@ func (s *Scope) FreeAll() {
 }
 
 // IsFreed reports whether FreeAll has been called.
+//
+//	if scope.IsFreed() { return }
 func (s *Scope) IsFreed() bool {
 	if s == nil {
 		return true
@@ -94,6 +106,9 @@ func (s *Scope) IsFreed() bool {
 }
 
 // Close releases every allocation in the scope and implements io.Closer.
+//
+//	scope := NewScope()
+//	defer scope.Close()
 func (s *Scope) Close() error {
 	s.FreeAll()
 	return nil

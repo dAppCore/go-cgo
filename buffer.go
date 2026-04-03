@@ -8,10 +8,10 @@ import (
 
 // Buffer owns byte memory that can be passed safely to C.
 //
-// buffer := NewBuffer(16)
-// defer buffer.Free()
-// n := buffer.CopyFrom([]byte("payload"))
-// _ = buffer.Bytes()[:n]
+//	buffer := NewBuffer(16)
+//	defer buffer.Free()
+//	n := buffer.CopyFrom([]byte("payload"))
+//	_ = buffer.Bytes()[:n]
 type Buffer struct {
 	data     []byte
 	length   int
@@ -21,7 +21,10 @@ type Buffer struct {
 	pinner   runtime.Pinner
 }
 
-// NewBuffer allocates memory and pins it so Ptr can be used across C boundaries.
+// NewBuffer allocates memory and pins it so Ptr can be safely shared with C.
+//
+//	buffer := NewBuffer(32)
+//	defer buffer.Free()
 func NewBuffer(size int) *Buffer {
 	if size < 0 {
 		panic("cgo.NewBuffer: size must be non-negative")
@@ -43,6 +46,9 @@ func NewBuffer(size int) *Buffer {
 }
 
 // Free releases the pinned memory backing slice and marks the buffer as freed.
+//
+//	buffer := NewBuffer(8)
+//	defer buffer.Free()
 func (b *Buffer) Free() {
 	if b == nil {
 		return
@@ -62,6 +68,9 @@ func (b *Buffer) Free() {
 }
 
 // CopyFrom copies bytes from src into the buffer and returns bytes copied.
+//
+//	buffer := NewBuffer(3)
+//	buffer.CopyFrom([]byte("abc"))
 func (b *Buffer) CopyFrom(src []byte) int {
 	b.assertNotFreed()
 	if len(src) == 0 || b.length == 0 {
@@ -77,25 +86,38 @@ func (b *Buffer) CopyFrom(src []byte) int {
 	return copied
 }
 
-// Bytes returns a mutable byte slice backed by the buffer memory.
+// Bytes returns the mutable byte slice backed by the buffer memory.
+//
+//	buffer := NewBuffer(4)
+//	n := buffer.CopyFrom([]byte("go"))
+//	_ = buffer.Bytes()[:n]
 func (b *Buffer) Bytes() []byte {
 	b.assertNotFreed()
 	return b.data
 }
 
 // Ptr returns the raw pointer to the buffer.
+//
+//	buffer := NewBuffer(4)
+//	call := buffer.Ptr()
 func (b *Buffer) Ptr() unsafe.Pointer {
 	b.assertNotFreed()
 	return b.pointer
 }
 
-// Len returns the current buffer length.
+// Len returns the allocated byte length of the buffer.
+//
+//	buffer := NewBuffer(4)
+//	if buffer.Len() == 4 { ... }
 func (b *Buffer) Len() int {
 	b.assertNotFreed()
 	return b.length
 }
 
 // IsFreed reports whether Free has already been called.
+//
+//	buffer := NewBuffer(4)
+//	if buffer.IsFreed() { ... }
 func (b *Buffer) IsFreed() bool {
 	return b.freed.Load()
 }
