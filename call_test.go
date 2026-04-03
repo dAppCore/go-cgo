@@ -177,6 +177,15 @@ func TestCallSupportsCUintptrArgument(t *testing.T) {
 	}
 }
 
+func TestCallSupportsByteSliceArgument(t *testing.T) {
+	t.Parallel()
+
+	payload := []byte("agent")
+	if err := Call(callSumLengthFunction(), payload, SizeT(len(payload))); err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+}
+
 func TestErrnoMapping(t *testing.T) {
 	t.Parallel()
 

@@ -819,6 +819,11 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 			return 0, true
 		}
 		return 0, false
+	case []byte:
+		if len(typed) == 0 {
+			return 0, true
+		}
+		return uintptr(unsafe.Pointer(&typed[0])), true
 	}
 }
 
