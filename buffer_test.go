@@ -54,6 +54,40 @@ func TestBufferDoubleFreePanics(t *testing.T) {
 	})
 }
 
+func TestBufferCloseReleasesMemory(t *testing.T) {
+	t.Parallel()
+
+	buffer := NewBuffer(4)
+	if err := buffer.Close(); err != nil {
+		t.Fatalf("expected close to return nil, got %v", err)
+	}
+	if !buffer.IsFreed() {
+		t.Fatal("expected buffer to be freed by Close")
+	}
+}
+
+func TestBufferClosePanicsOnDoubleClose(t *testing.T) {
+	t.Parallel()
+
+	buffer := NewBuffer(1)
+	if err := buffer.Close(); err != nil {
+		t.Fatalf("expected close to return nil, got %v", err)
+	}
+
+	assertPanics(t, "double-free", func() {
+		_ = buffer.Close()
+	})
+}
+
+func TestBufferCloseNil(t *testing.T) {
+	t.Parallel()
+
+	var buffer *Buffer
+	if err := buffer.Close(); err != nil {
+		t.Fatalf("expected nil buffer close to return nil, got %v", err)
+	}
+}
+
 func TestBufferUseAfterFreePanics(t *testing.T) {
 	t.Parallel()
 
