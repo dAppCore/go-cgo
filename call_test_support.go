@@ -22,6 +22,10 @@ int call_six_args(uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintpt
     return 13;
 }
 
+int call_buffer_argument(uintptr_t value) {
+    return value == 0 ? 13 : 0;
+}
+
 uintptr_t call_sum_length_ptr(void) {
     return (uintptr_t)&call_sum_length;
 }
@@ -33,6 +37,11 @@ uintptr_t call_failure_ptr(void) {
 uintptr_t call_six_args_ptr(void) {
     return (uintptr_t)&call_six_args;
 }
+
+uintptr_t call_buffer_argument_ptr(void) {
+    return (uintptr_t)&call_buffer_argument;
+}
+
 */
 import "C"
 
@@ -50,6 +59,11 @@ func callFailureFunction() unsafe.Pointer {
 
 func callSixArgumentFunction() unsafe.Pointer {
 	function := C.call_six_args_ptr()
+	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
+}
+
+func callBufferArgumentFunction() unsafe.Pointer {
+	function := C.call_buffer_argument_ptr()
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
 

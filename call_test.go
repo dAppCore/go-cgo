@@ -94,6 +94,17 @@ func TestCallSupportsSixArguments(t *testing.T) {
 	}
 }
 
+func TestCallSupportsBufferArgument(t *testing.T) {
+	t.Parallel()
+
+	buffer := NewBuffer(4)
+	defer buffer.Free()
+
+	if err := Call(callBufferArgumentFunction(), buffer); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
 func TestErrnoMapping(t *testing.T) {
 	t.Parallel()
 
