@@ -847,7 +847,13 @@ func Errno(resultCode C.int) error {
 	if resultCode == 0 {
 		return nil
 	}
-	return syscall.Errno(resultCode)
+
+	recordedCode := resultCode
+	if recordedCode < 0 {
+		recordedCode = -recordedCode
+	}
+
+	return syscall.Errno(recordedCode)
 }
 
 // WithErrno runs a function that returns C.int and maps the result to Go error.
