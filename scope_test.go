@@ -37,3 +37,22 @@ func TestScopePanicsAfterFreeAll(t *testing.T) {
 		scope.CString("nope")
 	})
 }
+
+func TestScopeIsFreedTracksLifecycle(t *testing.T) {
+	t.Parallel()
+
+	scope := NewScope()
+	if scope.IsFreed() {
+		t.Fatal("expected new scope to be active")
+	}
+
+	scope.FreeAll()
+	if !scope.IsFreed() {
+		t.Fatal("expected scope to report freed after FreeAll")
+	}
+
+	var nilScope *Scope
+	if !nilScope.IsFreed() {
+		t.Fatal("expected nil scope to be treated as freed")
+	}
+}
