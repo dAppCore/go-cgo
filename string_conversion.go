@@ -94,6 +94,7 @@ int cgo_call_16(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_
 import "C"
 
 import (
+	"reflect"
 	"strconv"
 	"syscall"
 	"unsafe"
@@ -805,6 +806,18 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 	case uint64:
 		return uintptr(typed), true
 	default:
+		reflected := reflect.ValueOf(value)
+		switch reflected.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return uintptr(reflected.Int()), true
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+			return uintptr(reflected.Uint()), true
+		case reflect.Bool:
+			if reflected.Bool() {
+				return 1, true
+			}
+			return 0, true
+		}
 		return 0, false
 	}
 }
