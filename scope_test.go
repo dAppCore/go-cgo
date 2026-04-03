@@ -17,7 +17,9 @@ func TestScopeFreesAllResources(t *testing.T) {
 	}
 
 	scope.FreeAll()
-	scope.FreeAll() // idempotent
+	assertPanics(t, "double-free", func() {
+		scope.FreeAll()
+	})
 
 	if !buffer.IsFreed() {
 		t.Fatal("expected buffer to be freed")
@@ -57,7 +59,7 @@ func TestScopeIsFreedTracksLifecycle(t *testing.T) {
 	}
 }
 
-func TestScopeCloseIsSafeAndIdempotent(t *testing.T) {
+func TestScopeClosePanicsOnDoubleFree(t *testing.T) {
 	t.Parallel()
 
 	var nilScope *Scope
@@ -79,7 +81,10 @@ func TestScopeCloseIsSafeAndIdempotent(t *testing.T) {
 		t.Fatalf("expected close to return nil, got %v", err)
 	}
 
-	scope.Close()
+	assertPanics(t, "double-free", func() {
+		scope.Close()
+	})
+
 	if !buffer.IsFreed() {
 		t.Fatal("expected buffer to be freed after close")
 	}
