@@ -11,6 +11,9 @@ func TestBufferLifecycleAndCopy(t *testing.T) {
 	const capacity = 8
 	buffer := NewBuffer(capacity)
 	defer buffer.Free()
+	if buffer.Ptr() == nil {
+		t.Fatal("expected non-nil pointer for non-zero allocation")
+	}
 
 	copied := buffer.CopyFrom([]byte{1, 2, 3, 4, 5})
 	if copied != 5 {
