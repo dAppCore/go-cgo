@@ -1,5 +1,10 @@
 package cgo
 
+/*
+#include <stdlib.h>
+*/
+import "C"
+
 import (
 	"runtime"
 	"sync/atomic"
@@ -17,11 +22,9 @@ type Buffer struct {
 	length   int
 	pointer  unsafe.Pointer
 	freed    atomic.Bool
-	isPinned bool
-	pinner   runtime.Pinner
 }
 
-// NewBuffer allocates memory and pins it so Ptr can be safely shared with C.
+// NewBuffer allocates a C-backed buffer that can be passed to C safely.
 //
 //	buffer := NewBuffer(32)
 //	defer buffer.Free()
@@ -30,16 +33,21 @@ func NewBuffer(size int) *Buffer {
 		panic("cgo.NewBuffer: size must be non-negative")
 	}
 
-	data := make([]byte, size)
-	buffer := &Buffer{
-		data:   data,
-		length: size,
+	var pointer unsafe.Pointer
+	var data []byte
+	if size > 0 {
+		cMemory := C.malloc(C.size_t(size))
+		if cMemory == nil {
+			panic("cgo.NewBuffer: C allocation failed")
+		}
+		pointer = cMemory
+		data = unsafe.Slice((*byte)(pointer), size)
 	}
 
-	if size > 0 {
-		buffer.pinner.Pin(&buffer.data[0])
-		buffer.isPinned = true
-		buffer.pointer = unsafe.Pointer(&buffer.data[0])
+	buffer := &Buffer{
+		data:    data,
+		length:  size,
+		pointer: pointer,
 	}
 
 	runtime.SetFinalizer(buffer, func(owned *Buffer) {
@@ -62,11 +70,7 @@ func (b *Buffer) Free() {
 		panic("cgo.Buffer.Free: double-free detected")
 	}
 
-	if b.isPinned {
-		b.pinner.Unpin()
-		b.isPinned = false
-	}
-
+	C.free(b.pointer)
 	b.pointer = nil
 	b.data = nil
 }
