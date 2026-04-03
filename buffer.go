@@ -100,6 +100,9 @@ func (b *Buffer) CopyFrom(src []byte) int {
 //
 //	buffer := NewBuffer(16)
 //	defer buffer.Close()
+//
+//	// same as:
+//	buffer.Free()
 func (b *Buffer) Close() error {
 	b.Free()
 	return nil

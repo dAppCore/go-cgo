@@ -117,6 +117,9 @@ func (s *Scope) IsFreed() bool {
 //
 //	scope := NewScope()
 //	defer scope.Close()
+//
+//	// same as:
+//	scope.FreeAll()
 func (s *Scope) Close() error {
 	s.FreeAll()
 	return nil
