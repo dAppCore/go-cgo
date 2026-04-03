@@ -71,6 +71,7 @@ func (b *Buffer) Free() {
 		panic("cgo.Buffer.Free: double-free detected")
 	}
 
+	runtime.SetFinalizer(b, nil)
 	C.free(b.pointer)
 	b.pointer = nil
 	b.data = nil
