@@ -43,7 +43,6 @@ int cgo_call_6(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t
 import "C"
 
 import (
-	"fmt"
 	"strconv"
 	"syscall"
 	"unsafe"
@@ -89,7 +88,7 @@ func cIntBitSize() int {
 	return int(unsafe.Sizeof(C.int(0)) * 8)
 }
 
-// Call invokes a C function pointer and maps a non-zero return into a Go error.
+// Call invokes a C function pointer and maps a non-zero return into a Go error using errno mapping.
 //
 //	err := cgo.Call(unsafe.Pointer(C.some_function), cgo.SizeT(len(data)))
 //	err == nil indicates success.
@@ -98,18 +97,18 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		panic("cgo.Call: function pointer is nil")
 	}
 
-	var result uintptr
+	var result C.int
 	target := uintptr(function)
 
 	switch len(args) {
 	case 0:
-		result = uintptr(C.cgo_call_0(C.uintptr_t(target)))
+		result = C.cgo_call_0(C.uintptr_t(target))
 	case 1:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_1(C.uintptr_t(target), C.uintptr_t(a0)))
+		result = C.cgo_call_1(C.uintptr_t(target), C.uintptr_t(a0))
 	case 2:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
@@ -119,7 +118,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_2(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1)))
+		result = C.cgo_call_2(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1))
 	case 3:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
@@ -133,7 +132,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_3(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2)))
+		result = C.cgo_call_3(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2))
 	case 4:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
@@ -151,7 +150,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_4(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3)))
+		result = C.cgo_call_4(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3))
 	case 5:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
@@ -173,7 +172,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_5(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4)))
+		result = C.cgo_call_5(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4))
 	case 6:
 		a0, ok := toSyscallArg(args[0])
 		if !ok {
@@ -199,13 +198,13 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		if !ok {
 			panic("cgo.Call: unsupported argument type")
 		}
-		result = uintptr(C.cgo_call_6(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4), C.uintptr_t(a5)))
+		result = C.cgo_call_6(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4), C.uintptr_t(a5))
 	default:
 		panic("cgo.Call: unsupported argument count: max 6")
 	}
 
 	if result != 0 {
-		return fmt.Errorf("cgo.Call: return code %d", int(result))
+		return Errno(result)
 	}
 	return nil
 }
