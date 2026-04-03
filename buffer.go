@@ -42,6 +42,10 @@ func NewBuffer(size int) *Buffer {
 		buffer.pointer = unsafe.Pointer(&buffer.data[0])
 	}
 
+	runtime.SetFinalizer(buffer, func(owned *Buffer) {
+		owned.Free()
+	})
+
 	return buffer
 }
 
