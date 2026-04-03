@@ -71,6 +71,13 @@ int call_sixteen_args(uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3, ui
     return 13;
 }
 
+int call_seventeen_args(uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15, uintptr_t a16) {
+    if (a0 == 10 && a1 == 11 && a2 == 12 && a3 == 13 && a4 == 14 && a5 == 15 && a6 == 16 && a7 == 17 && a8 == 18 && a9 == 19 && a10 == 20 && a11 == 21 && a12 == 22 && a13 == 23 && a14 == 24 && a15 == 25 && a16 == 26) {
+        return 0;
+    }
+    return 13;
+}
+
 int call_buffer_argument(uintptr_t value) {
     return value == 0 ? 13 : 0;
 }
@@ -132,6 +139,10 @@ uintptr_t call_fifteen_args_ptr(void) {
 
 uintptr_t call_sixteen_args_ptr(void) {
     return (uintptr_t)&call_sixteen_args;
+}
+
+uintptr_t call_seventeen_args_ptr(void) {
+    return (uintptr_t)&call_seventeen_args;
 }
 
 uintptr_t call_buffer_argument_ptr(void) {
@@ -206,6 +217,11 @@ func callFifteenArgumentFunction() unsafe.Pointer {
 
 func callSixteenArgumentFunction() unsafe.Pointer {
 	function := C.call_sixteen_args_ptr()
+	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
+}
+
+func callSeventeenArgumentFunction() unsafe.Pointer {
+	function := C.call_seventeen_args_ptr()
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
 
