@@ -161,6 +161,14 @@ func TestCallSupportsBufferArgument(t *testing.T) {
 	}
 }
 
+func TestCallSupportsCommonCIntegerTypes(t *testing.T) {
+	t.Parallel()
+
+	if err := callSupportsCIntegerArguments(); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
 func TestErrnoMapping(t *testing.T) {
 	t.Parallel()
 

@@ -757,7 +757,21 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 		return uintptr(typed), true
 	case C.char:
 		return uintptr(typed), true
+	case C.schar:
+		return uintptr(typed), true
+	case C.uchar:
+		return uintptr(typed), true
+	case C.short:
+		return uintptr(typed), true
+	case C.ushort:
+		return uintptr(typed), true
 	case C.int:
+		return uintptr(typed), true
+	case C.long:
+		return uintptr(typed), true
+	case C.longlong:
+		return uintptr(typed), true
+	case C.ulonglong:
 		return uintptr(typed), true
 	case C.size_t:
 		return uintptr(typed), true
