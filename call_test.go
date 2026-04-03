@@ -186,6 +186,15 @@ func TestCallSupportsByteSliceArgument(t *testing.T) {
 	}
 }
 
+func TestCallSupportsEmptyByteSliceArgument(t *testing.T) {
+	t.Parallel()
+
+	payload := []byte{}
+	if err := Call(callZeroByteSliceArgumentFunction(), payload); err != nil {
+		t.Fatalf("expected success for empty byte slice, got %v", err)
+	}
+}
+
 func TestErrnoMapping(t *testing.T) {
 	t.Parallel()
 
