@@ -6,6 +6,7 @@ package cgo
 import "C"
 
 import (
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -29,7 +30,11 @@ type Scope struct {
 //	scope := NewScope()
 //	defer scope.FreeAll()
 func NewScope() *Scope {
-	return &Scope{}
+	scope := &Scope{}
+	runtime.SetFinalizer(scope, func(owned *Scope) {
+		owned.FreeAll()
+	})
+	return scope
 }
 
 // Buffer allocates a managed buffer and registers it for scope cleanup.
