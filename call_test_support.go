@@ -75,6 +75,10 @@ int call_buffer_argument(uintptr_t value) {
     return value == 0 ? 13 : 0;
 }
 
+int call_zero_byte_slice_argument(uintptr_t value) {
+    return value == 0 ? 0 : 13;
+}
+
 int call_c_types_arguments(long a0, unsigned long a1, long long a2, unsigned long long a3) {
     if (a0 == 10 && a1 == 11 && a2 == 12 && a3 == 13) {
         return 0;
@@ -128,6 +132,10 @@ uintptr_t call_sixteen_args_ptr(void) {
 
 uintptr_t call_buffer_argument_ptr(void) {
     return (uintptr_t)&call_buffer_argument;
+}
+
+uintptr_t call_zero_byte_slice_argument_ptr(void) {
+    return (uintptr_t)&call_zero_byte_slice_argument;
 }
 
 uintptr_t call_c_types_arguments_ptr(void) {
@@ -195,6 +203,11 @@ func callSixteenArgumentFunction() unsafe.Pointer {
 
 func callBufferArgumentFunction() unsafe.Pointer {
 	function := C.call_buffer_argument_ptr()
+	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
+}
+
+func callZeroByteSliceArgumentFunction() unsafe.Pointer {
+	function := C.call_zero_byte_slice_argument_ptr()
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
 
