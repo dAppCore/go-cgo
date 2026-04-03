@@ -59,6 +59,10 @@ func (s *Scope) CString(value string) *C.char {
 
 // FreeAll releases every allocation created under this scope.
 func (s *Scope) FreeAll() {
+	if s == nil {
+		return
+	}
+
 	if !s.freed.CompareAndSwap(false, true) {
 		return
 	}
@@ -87,4 +91,10 @@ func (s *Scope) IsFreed() bool {
 		return true
 	}
 	return s.freed.Load()
+}
+
+// Close releases every allocation in the scope and implements io.Closer.
+func (s *Scope) Close() error {
+	s.FreeAll()
+	return nil
 }

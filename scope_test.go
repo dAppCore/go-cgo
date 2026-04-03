@@ -56,3 +56,31 @@ func TestScopeIsFreedTracksLifecycle(t *testing.T) {
 		t.Fatal("expected nil scope to be treated as freed")
 	}
 }
+
+func TestScopeCloseIsSafeAndIdempotent(t *testing.T) {
+	t.Parallel()
+
+	var nilScope *Scope
+	if err := nilScope.Close(); err != nil {
+		t.Fatalf("expected nil scope close to return nil, got %v", err)
+	}
+
+	scope := NewScope()
+	buffer := scope.Buffer(4)
+	cString := scope.CString("agent")
+	if cString == nil {
+		t.Fatal("expected CString allocation")
+	}
+	if copied := buffer.CopyFrom([]byte("go")); copied != 2 {
+		t.Fatalf("expected 2 bytes copied, got %d", copied)
+	}
+
+	if err := scope.Close(); err != nil {
+		t.Fatalf("expected close to return nil, got %v", err)
+	}
+
+	scope.Close()
+	if !buffer.IsFreed() {
+		t.Fatal("expected buffer to be freed after close")
+	}
+}
