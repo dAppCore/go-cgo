@@ -81,6 +81,7 @@ func (s *Scope) FreeAll() {
 	if !s.freed.CompareAndSwap(false, true) {
 		panic("cgo.Scope.FreeAll: double-free detected")
 	}
+	runtime.SetFinalizer(s, nil)
 
 	s.lock.Lock()
 	buffers := s.buffers
