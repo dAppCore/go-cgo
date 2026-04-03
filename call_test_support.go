@@ -90,6 +90,10 @@ int call_uintptr_argument(uintptr_t value) {
     return value == 42 ? 0 : 13;
 }
 
+int call_any_pointer_argument(uintptr_t value) {
+    return value == 0 ? 13 : 0;
+}
+
 uintptr_t call_sum_length_ptr(void) {
     return (uintptr_t)&call_sum_length;
 }
@@ -144,6 +148,10 @@ uintptr_t call_c_types_arguments_ptr(void) {
 
 uintptr_t call_uintptr_argument_ptr(void) {
     return (uintptr_t)&call_uintptr_argument;
+}
+
+uintptr_t call_any_pointer_argument_ptr(void) {
+    return (uintptr_t)&call_any_pointer_argument;
 }
 
 */
@@ -218,6 +226,11 @@ func callCTypeArgumentFunction() unsafe.Pointer {
 
 func callCUintptrArgumentFunction() unsafe.Pointer {
 	function := C.call_uintptr_argument_ptr()
+	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
+}
+
+func callAnyPointerArgumentFunction() unsafe.Pointer {
+	function := C.call_any_pointer_argument_ptr()
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
 

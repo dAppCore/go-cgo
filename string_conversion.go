@@ -811,6 +811,11 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 	default:
 		reflected := reflect.ValueOf(value)
 		switch reflected.Kind() {
+		case reflect.Pointer, reflect.UnsafePointer:
+			if reflected.IsNil() {
+				return 0, true
+			}
+			return reflected.Pointer(), true
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return uintptr(reflected.Int()), true
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:

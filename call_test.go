@@ -177,6 +177,20 @@ func TestCallSupportsCUintptrArgument(t *testing.T) {
 	}
 }
 
+func TestCallSupportsArbitraryPointerArgument(t *testing.T) {
+	t.Parallel()
+
+	payload := []byte("agent")
+	if err := Call(callAnyPointerArgumentFunction(), &payload[0]); err != nil {
+		t.Fatalf("expected success for pointer argument, got %v", err)
+	}
+
+	var pointer *byte
+	if err := Call(callAnyPointerArgumentFunction(), pointer); err == nil {
+		t.Fatal("expected error for nil pointer argument")
+	}
+}
+
 func TestCallSupportsByteSliceArgument(t *testing.T) {
 	t.Parallel()
 
