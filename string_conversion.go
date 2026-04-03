@@ -8,6 +8,9 @@ typedef int (*cgo_call_int_fn0_t)(void);
 typedef int (*cgo_call_int_fn1_t)(uintptr_t);
 typedef int (*cgo_call_int_fn2_t)(uintptr_t, uintptr_t);
 typedef int (*cgo_call_int_fn3_t)(uintptr_t, uintptr_t, uintptr_t);
+typedef int (*cgo_call_int_fn4_t)(uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+typedef int (*cgo_call_int_fn5_t)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+typedef int (*cgo_call_int_fn6_t)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
 
 int cgo_call_0(uintptr_t fn) {
 	return ((cgo_call_int_fn0_t)fn)();
@@ -23,6 +26,18 @@ int cgo_call_2(uintptr_t fn, uintptr_t a0, uintptr_t a1) {
 
 int cgo_call_3(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2) {
 	return ((cgo_call_int_fn3_t)fn)(a0, a1, a2);
+}
+
+int cgo_call_4(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3) {
+	return ((cgo_call_int_fn4_t)fn)(a0, a1, a2, a3);
+}
+
+int cgo_call_5(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4) {
+	return ((cgo_call_int_fn5_t)fn)(a0, a1, a2, a3, a4);
+}
+
+int cgo_call_6(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5) {
+	return ((cgo_call_int_fn6_t)fn)(a0, a1, a2, a3, a4, a5);
 }
 */
 import "C"
@@ -109,8 +124,74 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 			panic("cgo.Call: unsupported argument type")
 		}
 		result = uintptr(C.cgo_call_3(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2)))
+	case 4:
+		a0, ok := toSyscallArg(args[0])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a1, ok := toSyscallArg(args[1])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a2, ok := toSyscallArg(args[2])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a3, ok := toSyscallArg(args[3])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		result = uintptr(C.cgo_call_4(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3)))
+	case 5:
+		a0, ok := toSyscallArg(args[0])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a1, ok := toSyscallArg(args[1])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a2, ok := toSyscallArg(args[2])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a3, ok := toSyscallArg(args[3])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a4, ok := toSyscallArg(args[4])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		result = uintptr(C.cgo_call_5(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4)))
+	case 6:
+		a0, ok := toSyscallArg(args[0])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a1, ok := toSyscallArg(args[1])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a2, ok := toSyscallArg(args[2])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a3, ok := toSyscallArg(args[3])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a4, ok := toSyscallArg(args[4])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		a5, ok := toSyscallArg(args[5])
+		if !ok {
+			panic("cgo.Call: unsupported argument type")
+		}
+		result = uintptr(C.cgo_call_6(C.uintptr_t(target), C.uintptr_t(a0), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3), C.uintptr_t(a4), C.uintptr_t(a5)))
 	default:
-		panic("cgo.Call: unsupported argument count: max 3")
+		panic("cgo.Call: unsupported argument count: max 6")
 	}
 
 	if result != 0 {
