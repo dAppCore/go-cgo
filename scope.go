@@ -80,3 +80,11 @@ func (s *Scope) FreeAll() {
 		Free(pointer)
 	}
 }
+
+// IsFreed reports whether FreeAll has been called.
+func (s *Scope) IsFreed() bool {
+	if s == nil {
+		return true
+	}
+	return s.freed.Load()
+}
