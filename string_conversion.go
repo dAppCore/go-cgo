@@ -215,6 +215,11 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 		return 0, true
 	case uintptr:
 		return typed, true
+	case *Buffer:
+		if typed == nil {
+			return 0, true
+		}
+		return uintptr(typed.Ptr()), true
 	case unsafe.Pointer:
 		return uintptr(typed), true
 	case C.char:
