@@ -123,6 +123,9 @@ func (b *Buffer) Len() int {
 //	buffer := NewBuffer(4)
 //	if buffer.IsFreed() { ... }
 func (b *Buffer) IsFreed() bool {
+	if b == nil {
+		return true
+	}
 	return b.freed.Load()
 }
 
