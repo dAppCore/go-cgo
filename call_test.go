@@ -82,7 +82,7 @@ func TestCallRejectsUnsupportedInputs(t *testing.T) {
 	})
 
 	assertPanics(t, "unsupported argument count", func() {
-		_ = Call(callFailureFunction(), 1, 2, 3, 4, 5, 6, 7)
+		_ = Call(callFailureFunction(), 1, 2, 3, 4, 5, 6, 7, 8, 9)
 	})
 }
 
@@ -90,6 +90,22 @@ func TestCallSupportsSixArguments(t *testing.T) {
 	t.Parallel()
 
 	if err := Call(callSixArgumentFunction(), 10, 11, 12, 13, 14, 15); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
+func TestCallSupportsSevenArguments(t *testing.T) {
+	t.Parallel()
+
+	if err := Call(callSevenArgumentFunction(), 10, 11, 12, 13, 14, 15, 16); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
+func TestCallSupportsEightArguments(t *testing.T) {
+	t.Parallel()
+
+	if err := Call(callEightArgumentFunction(), 10, 11, 12, 13, 14, 15, 16, 17); err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
 }
