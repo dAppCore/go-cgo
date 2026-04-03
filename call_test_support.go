@@ -36,3 +36,15 @@ func callFailureFunction() unsafe.Pointer {
 	function := C.call_failure_ptr()
 	return *(*unsafe.Pointer)(unsafe.Pointer(&function))
 }
+
+func callWithErrnoZero() (int, error) {
+	return WithErrno(func() C.int {
+		return 0
+	})
+}
+
+func callWithErrnoFailure() (int, error) {
+	return WithErrno(func() C.int {
+		return 2
+	})
+}
