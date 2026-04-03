@@ -12,20 +12,20 @@ import (
 	"unsafe"
 )
 
-// Scope tracks multiple allocations and releases them together.
+// Scope tracks multiple C allocations and releases them together.
 //
-// scope := cgo.NewScope()
-// defer scope.FreeAll()
-// buffer := scope.Buffer(32)
-// cString := scope.CString("hello")
+//	scope := NewScope()
+//	defer scope.FreeAll()
+//	buffer := scope.Buffer(32)
+//	cString := scope.CString("hello")
 type Scope struct {
-	lock     sync.Mutex
-	buffers  []*Buffer
-	strings  []unsafe.Pointer
-	freed    atomic.Bool
+	lock    sync.Mutex
+	buffers []*Buffer
+	strings []unsafe.Pointer
+	freed   atomic.Bool
 }
 
-// NewScope creates a zero-value scope for grouped CGo allocations.
+// NewScope creates a grouped allocator for temporary C memory.
 //
 //	scope := NewScope()
 //	defer scope.FreeAll()
@@ -37,7 +37,7 @@ func NewScope() *Scope {
 	return scope
 }
 
-// Buffer allocates a managed buffer and registers it for scope cleanup.
+// Buffer allocates a managed buffer and registers it for cleanup.
 //
 //	buffer := scope.Buffer(64)
 func (s *Scope) Buffer(size int) *Buffer {
@@ -53,7 +53,7 @@ func (s *Scope) Buffer(size int) *Buffer {
 	return buffer
 }
 
-// CString allocates a managed C string and registers it for scope cleanup.
+// CString allocates a managed C string and registers it for cleanup.
 //
 //	cString := scope.CString("hello")
 func (s *Scope) CString(value string) *C.char {
@@ -102,7 +102,9 @@ func (s *Scope) FreeAll() {
 
 // IsFreed reports whether FreeAll has been called.
 //
-//	if scope.IsFreed() { return }
+//	if scope.IsFreed() {
+//		// scope is inactive
+//	}
 func (s *Scope) IsFreed() bool {
 	if s == nil {
 		return true

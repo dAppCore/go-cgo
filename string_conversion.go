@@ -100,9 +100,9 @@ import (
 	"unsafe"
 )
 
-// SizeT converts a Go int into a C size_t for cgo calls.
+// SizeT converts a Go int into a C size_t for C APIs.
 //
-//	size := cgo.SizeT(len(data))
+//	bufferSize := SizeT(len(payload))
 func SizeT(value int) C.size_t {
 	if value < 0 {
 		panic("cgo.SizeT: negative values are not representable as C.size_t")
@@ -120,9 +120,9 @@ func SizeT(value int) C.size_t {
 	return C.size_t(value)
 }
 
-// Int converts a Go int into a C int for cgo calls.
+// Int converts a Go int into a C int for C APIs.
 //
-//	rc := cgo.Int(returnCode)
+//	remaining := Int(2)
 func Int(value int) C.int {
 	cIntBits := cIntBitSize()
 	if cIntBits < strconv.IntSize {
@@ -140,12 +140,10 @@ func cIntBitSize() int {
 	return int(unsafe.Sizeof(C.int(0)) * 8)
 }
 
-// Call invokes a C function pointer and maps a non-zero return into a Go error.
+// Call invokes a C function pointer and maps a non-zero return code to an error.
 //
-//	err := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(data)))
-//	if err != nil {
-//		return err
-//	}
+//	err := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(payload)))
+//	if err != nil { return err }
 func Call(function unsafe.Pointer, args ...interface{}) error {
 	if function == nil {
 		panic("cgo.Call: function pointer is nil")
@@ -829,9 +827,7 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 
 // GoString converts a null-terminated C string to a Go string.
 //
-//	cString := CString("example")
-//	result := GoString(cString)
-//	Free(unsafe.Pointer(cString))
+//	native := GoString(CString("hello"))
 func GoString(cs *C.char) string {
 	if cs == nil {
 		return ""
@@ -847,7 +843,7 @@ func CString(value string) *C.char {
 	return C.CString(value)
 }
 
-// Free releases memory previously returned by CString.
+// Free releases memory previously allocated by this package.
 //
 //	cString := CString("hello")
 //	Free(unsafe.Pointer(cString))
@@ -858,9 +854,9 @@ func Free(ptr unsafe.Pointer) {
 	C.free(ptr)
 }
 
-// Errno converts a C error number to a Go error.
+// Errno converts a C errno-like return value to a Go error.
 //
-//	resultCode := Errno(-2)
+//	err := Errno(C.int(13))
 func Errno(resultCode C.int) error {
 	if resultCode == 0 {
 		return nil
@@ -874,9 +870,9 @@ func Errno(resultCode C.int) error {
 	return syscall.Errno(recordedCode)
 }
 
-// WithErrno runs a function that returns C.int and maps the result to Go error.
+// WithErrno runs a C-style function and converts the C return value to (result, error).
 //
-//	resultCode, err := WithErrno(func() C.int {
+//	result, err := WithErrno(func() C.int {
 //		return C.my_function()
 //	})
 func WithErrno(fn func() C.int) (int, error) {

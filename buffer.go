@@ -18,15 +18,16 @@ import (
 //	n := buffer.CopyFrom([]byte("payload"))
 //	_ = buffer.Bytes()[:n]
 type Buffer struct {
-	data     []byte
-	length   int
-	pointer  unsafe.Pointer
-	freed    atomic.Bool
+	data    []byte
+	length  int
+	pointer unsafe.Pointer
+	freed   atomic.Bool
 }
 
-// NewBuffer allocates a C-backed buffer that can be passed to C safely.
+// NewBuffer allocates a C-backed byte buffer for C interop.
 //
-//	buffer := NewBuffer(32)
+//	input := make([]byte, 32)
+//	buffer := NewBuffer(len(input))
 //	defer buffer.Free()
 func NewBuffer(size int) *Buffer {
 	if size < 0 {
@@ -107,7 +108,7 @@ func (b *Buffer) Bytes() []byte {
 // Ptr returns the raw pointer to the buffer.
 //
 //	buffer := NewBuffer(4)
-//	call := buffer.Ptr()
+//	_ = buffer.Ptr()
 func (b *Buffer) Ptr() unsafe.Pointer {
 	b.assertNotFreed()
 	return b.pointer
@@ -116,7 +117,9 @@ func (b *Buffer) Ptr() unsafe.Pointer {
 // Len returns the allocated byte length of the buffer.
 //
 //	buffer := NewBuffer(4)
-//	if buffer.Len() == 4 { ... }
+//	if buffer.Len() == 4 {
+//		// preallocated 4-byte buffer
+//	}
 func (b *Buffer) Len() int {
 	b.assertNotFreed()
 	return b.length
@@ -125,7 +128,9 @@ func (b *Buffer) Len() int {
 // IsFreed reports whether Free has already been called.
 //
 //	buffer := NewBuffer(4)
-//	if buffer.IsFreed() { ... }
+//	if buffer.IsFreed() {
+//		return
+//	}
 func (b *Buffer) IsFreed() bool {
 	if b == nil {
 		return true
