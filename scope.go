@@ -79,7 +79,7 @@ func (s *Scope) FreeAll() {
 	}
 
 	if !s.freed.CompareAndSwap(false, true) {
-		return
+		panic("cgo.Scope.FreeAll: double-free detected")
 	}
 
 	s.lock.Lock()
