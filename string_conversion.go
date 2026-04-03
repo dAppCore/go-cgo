@@ -139,10 +139,12 @@ func cIntBitSize() int {
 	return int(unsafe.Sizeof(C.int(0)) * 8)
 }
 
-// Call invokes a C function pointer and maps a non-zero return into a Go error using errno mapping.
+// Call invokes a C function pointer and maps a non-zero return into a Go error.
 //
-//	err := cgo.Call(unsafe.Pointer(C.some_function), cgo.SizeT(len(data)))
-//	err == nil indicates success.
+//	err := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(data)))
+//	if err != nil {
+//		return err
+//	}
 func Call(function unsafe.Pointer, args ...interface{}) error {
 	if function == nil {
 		panic("cgo.Call: function pointer is nil")
@@ -795,9 +797,9 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 
 // GoString converts a null-terminated C string to a Go string.
 //
-//	cStr := C.CString("example")
-//	result := cgo.GoString(cStr)
-//	cgo.Free(unsafe.Pointer(cStr))
+//	cString := CString("example")
+//	result := GoString(cString)
+//	Free(unsafe.Pointer(cString))
 func GoString(cs *C.char) string {
 	if cs == nil {
 		return ""
@@ -807,16 +809,16 @@ func GoString(cs *C.char) string {
 
 // CString converts a Go string to a C string.
 //
-//	cStr := cgo.CString("hello")
-//	defer cgo.Free(unsafe.Pointer(cStr))
+//	cString := CString("hello")
+//	defer Free(unsafe.Pointer(cString))
 func CString(value string) *C.char {
 	return C.CString(value)
 }
 
 // Free releases memory previously returned by CString.
 //
-//	cStr := cgo.CString("hello")
-//	cgo.Free(unsafe.Pointer(cStr))
+//	cString := CString("hello")
+//	Free(unsafe.Pointer(cString))
 func Free(ptr unsafe.Pointer) {
 	if ptr == nil {
 		return
@@ -826,17 +828,17 @@ func Free(ptr unsafe.Pointer) {
 
 // Errno converts a C error number to a Go error.
 //
-//	rc := cgo.Errno(-2)
-func Errno(rc C.int) error {
-	if rc == 0 {
+//	resultCode := Errno(-2)
+func Errno(resultCode C.int) error {
+	if resultCode == 0 {
 		return nil
 	}
-	return syscall.Errno(rc)
+	return syscall.Errno(resultCode)
 }
 
 // WithErrno runs a function that returns C.int and maps the result to Go error.
 //
-//	result, err := cgo.WithErrno(func() C.int {
+//	resultCode, err := WithErrno(func() C.int {
 //		return C.my_function()
 //	})
 func WithErrno(fn func() C.int) (int, error) {
