@@ -279,7 +279,7 @@ func callWithErrnoFailure() (int, error) {
 }
 
 func callSupportsCIntegerArguments() error {
-	return Call(callCTypeArgumentFunction(), C.long(10), C.ulong(11), C.longlong(12), C.ulonglong(13))
+	return Call(callCTypeArgumentFunction(), C.size_t(10), C.int(11), C.uintptr_t(12), C.size_t(13))
 }
 
 func callSupportsCUintptrArgument() error {

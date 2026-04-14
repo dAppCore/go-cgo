@@ -104,7 +104,6 @@ int cgo_call_18(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_
 import "C"
 
 import (
-	"reflect"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -160,6 +159,9 @@ func cIntBitSize() int {
 
 // Call invokes a C function pointer and maps a non-zero return code to an error.
 //
+// Supported argument types are unsafe.Pointer, *Buffer, *C.char, []byte, int,
+// int32, int64, uint, uint32, uint64, C.size_t, C.int, and C.uintptr_t.
+//
 //	err := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(payload)))
 //	if err != nil { return err }
 func Call(function unsafe.Pointer, args ...interface{}) error {
@@ -173,7 +175,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		panic("cgo.Call: unsupported argument type at argument " + strconv.Itoa(index))
 	}
 	toCallArg := func(index int) C.uintptr_t {
-		converted, ok := toSyscallArg(args[index])
+		converted, ok := toCallArgValue(args[index])
 		if !ok {
 			unsupportedArgument(index + 1)
 		}
@@ -229,53 +231,20 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 	return nil
 }
 
-func toSyscallArg(value interface{}) (uintptr, bool) {
+func toCallArgValue(value interface{}) (uintptr, bool) {
 	switch typed := value.(type) {
 	case nil:
 		return 0, true
-	case uintptr:
-		return typed, true
+	case unsafe.Pointer:
+		return uintptr(typed), true
 	case *Buffer:
 		if typed == nil {
 			return 0, true
 		}
 		return uintptr(typed.Ptr()), true
-	case unsafe.Pointer:
-		return uintptr(typed), true
-	case C.char:
-		return uintptr(typed), true
-	case C.schar:
-		return uintptr(typed), true
-	case C.uchar:
-		return uintptr(typed), true
-	case C.short:
-		return uintptr(typed), true
-	case C.ushort:
-		return uintptr(typed), true
-	case C.int:
-		return uintptr(typed), true
-	case C.long:
-		return uintptr(typed), true
-	case C.longlong:
-		return uintptr(typed), true
-	case C.ulonglong:
-		return uintptr(typed), true
-	case C.size_t:
-		return uintptr(typed), true
 	case *C.char:
 		return uintptr(unsafe.Pointer(typed)), true
-	case *byte:
-		return uintptr(unsafe.Pointer(typed)), true
-	case bool:
-		if typed {
-			return 1, true
-		}
-		return 0, true
 	case int:
-		return uintptr(typed), true
-	case int8:
-		return uintptr(typed), true
-	case int16:
 		return uintptr(typed), true
 	case int32:
 		return uintptr(typed), true
@@ -283,39 +252,21 @@ func toSyscallArg(value interface{}) (uintptr, bool) {
 		return uintptr(typed), true
 	case uint:
 		return uintptr(typed), true
-	case uint8:
-		return uintptr(typed), true
-	case uint16:
-		return uintptr(typed), true
 	case uint32:
 		return uintptr(typed), true
 	case uint64:
+		return uintptr(typed), true
+	case C.size_t:
+		return uintptr(typed), true
+	case C.int:
 		return uintptr(typed), true
 	case []byte:
 		if len(typed) == 0 {
 			return 0, true
 		}
 		return uintptr(unsafe.Pointer(&typed[0])), true
-	default:
-		reflected := reflect.ValueOf(value)
-		switch reflected.Kind() {
-		case reflect.Pointer, reflect.UnsafePointer:
-			if reflected.IsNil() {
-				return 0, true
-			}
-			return reflected.Pointer(), true
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			return uintptr(reflected.Int()), true
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			return uintptr(reflected.Uint()), true
-		case reflect.Bool:
-			if reflected.Bool() {
-				return 1, true
-			}
-			return 0, true
-		}
-		return 0, false
 	}
+	return 0, false
 }
 
 // GoString converts a null-terminated C string to a Go string.

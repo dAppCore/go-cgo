@@ -4,6 +4,7 @@ import (
 	"errors"
 	"syscall"
 	"testing"
+	"unsafe"
 )
 
 func TestSizeTAndIntConversions(t *testing.T) {
@@ -84,6 +85,10 @@ func TestCallRejectsUnsupportedInputs(t *testing.T) {
 	assertPanics(t, "unsupported argument count", func() {
 		_ = Call(callFailureFunction(), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
 	})
+
+	assertPanics(t, "unsupported argument type", func() {
+		_ = Call(callFailureFunction(), true)
+	})
 }
 
 func TestCallSupportsThirteenArguments(t *testing.T) {
@@ -137,7 +142,7 @@ func TestCallSupportsEighteenArguments(t *testing.T) {
 func TestCallSupportsSixArguments(t *testing.T) {
 	t.Parallel()
 
-	if err := Call(callSixArgumentFunction(), 10, 11, 12, 13, 14, 15); err != nil {
+	if err := Call(callSixArgumentFunction(), int32(10), int64(11), uint(12), uint32(13), uint64(14), 15); err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
 }
@@ -197,11 +202,11 @@ func TestCallSupportsArbitraryPointerArgument(t *testing.T) {
 	t.Parallel()
 
 	payload := []byte("agent")
-	if err := Call(callAnyPointerArgumentFunction(), &payload[0]); err != nil {
+	if err := Call(callAnyPointerArgumentFunction(), unsafe.Pointer(&payload[0])); err != nil {
 		t.Fatalf("expected success for pointer argument, got %v", err)
 	}
 
-	var pointer *byte
+	var pointer unsafe.Pointer
 	if err := Call(callAnyPointerArgumentFunction(), pointer); err == nil {
 		t.Fatal("expected error for nil pointer argument")
 	}
