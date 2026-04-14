@@ -104,6 +104,7 @@ int cgo_call_18(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_
 import "C"
 
 import (
+	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
@@ -270,6 +271,14 @@ func toCallArgValue(value interface{}) (uintptr, bool) {
 			return 0, true
 		}
 		return uintptr(unsafe.Pointer(&typed[0])), true
+	}
+
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return uintptr(reflected.Int()), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return uintptr(reflected.Uint()), true
 	}
 	return 0, false
 }
