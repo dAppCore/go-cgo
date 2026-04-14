@@ -150,6 +150,30 @@ func TestFreeNilDoesNotPanic(t *testing.T) {
 	Free(nil)
 }
 
+func TestFreeCStringIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	cString := CString("hello")
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Free on already freed CString panicked: %v", r)
+		}
+	}()
+
+	Free(unsafe.Pointer(cString))
+	Free(unsafe.Pointer(cString))
+}
+
+func TestScopeCStringManualFreeStillAllowsScopeCleanup(t *testing.T) {
+	t.Parallel()
+
+	scope := NewScope()
+	cString := scope.CString("hello")
+
+	Free(unsafe.Pointer(cString))
+	scope.FreeAll()
+}
+
 func assertPanics(t *testing.T, want string, fn func()) {
 	t.Helper()
 

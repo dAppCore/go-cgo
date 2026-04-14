@@ -106,9 +106,17 @@ import "C"
 import (
 	"reflect"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 )
+
+var freedCStringPointers sync.Map
+
+type cStringFreeState struct {
+	freed atomic.Bool
+}
 
 // SizeT converts a Go int into a C size_t for C APIs.
 //
@@ -325,10 +333,22 @@ func GoString(cs *C.char) string {
 //	cString := CString("hello")
 //	defer Free(unsafe.Pointer(cString))
 func CString(value string) *C.char {
-	return C.CString(value)
+	size := len(value) + 1
+	memory := C.malloc(C.size_t(size))
+	if memory == nil {
+		panic("cgo.CString: C allocation failed")
+	}
+
+	bytes := unsafe.Slice((*byte)(memory), size)
+	copy(bytes, value)
+	bytes[len(value)] = 0
+
+	freedCStringPointers.Delete(memory)
+	return (*C.char)(memory)
 }
 
 // Free releases memory previously allocated by this package.
+// It is safe to call more than once on the same pointer.
 //
 //	cString := CString("hello")
 //	Free(unsafe.Pointer(cString))
@@ -336,6 +356,13 @@ func Free(ptr unsafe.Pointer) {
 	if ptr == nil {
 		return
 	}
+
+	stateValue, _ := freedCStringPointers.LoadOrStore(ptr, &cStringFreeState{})
+	state := stateValue.(*cStringFreeState)
+	if !state.freed.CompareAndSwap(false, true) {
+		return
+	}
+
 	C.free(ptr)
 }
 
