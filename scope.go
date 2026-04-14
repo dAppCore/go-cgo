@@ -32,7 +32,7 @@ type Scope struct {
 func NewScope() *Scope {
 	scope := &Scope{}
 	runtime.SetFinalizer(scope, func(owned *Scope) {
-		owned.FreeAll()
+		owned.freeAll(true)
 	})
 	return scope
 }
@@ -74,31 +74,7 @@ func (s *Scope) CString(value string) *C.char {
 //	scope := NewScope()
 //	defer scope.FreeAll()
 func (s *Scope) FreeAll() {
-	if s == nil {
-		return
-	}
-
-	if !s.freed.CompareAndSwap(false, true) {
-		panic("cgo.Scope.FreeAll: double-free detected")
-	}
-	runtime.SetFinalizer(s, nil)
-
-	s.lock.Lock()
-	buffers := s.buffers
-	strings := s.strings
-	s.buffers = nil
-	s.strings = nil
-	s.lock.Unlock()
-
-	for _, buffer := range buffers {
-		if buffer != nil && !buffer.IsFreed() {
-			buffer.Free()
-		}
-	}
-
-	for _, pointer := range strings {
-		Free(pointer)
-	}
+	s.freeAll(false)
 }
 
 // Close releases every allocation in the scope and implements io.Closer.
@@ -120,4 +96,36 @@ func (s *Scope) IsFreed() bool {
 		return true
 	}
 	return s.freed.Load()
+}
+
+func (s *Scope) freeAll(noPanic bool) bool {
+	if s == nil {
+		return false
+	}
+
+	if !s.freed.CompareAndSwap(false, true) {
+		if noPanic {
+			return false
+		}
+		panic("cgo.Scope.FreeAll: double-free detected")
+	}
+	runtime.SetFinalizer(s, nil)
+
+	s.lock.Lock()
+	buffers := s.buffers
+	strings := s.strings
+	s.buffers = nil
+	s.strings = nil
+	s.lock.Unlock()
+
+	for _, buffer := range buffers {
+		if buffer != nil {
+			buffer.free(true)
+		}
+	}
+
+	for _, pointer := range strings {
+		Free(pointer)
+	}
+	return true
 }

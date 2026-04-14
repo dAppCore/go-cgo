@@ -52,7 +52,7 @@ func NewBuffer(size int) *Buffer {
 	}
 
 	runtime.SetFinalizer(buffer, func(owned *Buffer) {
-		owned.Free()
+		owned.free(true)
 	})
 
 	return buffer
@@ -63,18 +63,7 @@ func NewBuffer(size int) *Buffer {
 //	buffer := NewBuffer(8)
 //	defer buffer.Free()
 func (b *Buffer) Free() {
-	if b == nil {
-		return
-	}
-
-	if !b.freed.CompareAndSwap(false, true) {
-		panic("cgo.Buffer.Free: double-free detected")
-	}
-
-	runtime.SetFinalizer(b, nil)
-	C.free(b.pointer)
-	b.pointer = nil
-	b.data = nil
+	b.free(false)
 }
 
 // Close releases the buffer and implements io.Closer.
@@ -155,4 +144,23 @@ func (b *Buffer) assertNotFreed() {
 	if b.freed.Load() {
 		panic("cgo.Buffer: use-after-free detected")
 	}
+}
+
+func (b *Buffer) free(noPanic bool) bool {
+	if b == nil {
+		return false
+	}
+
+	if !b.freed.CompareAndSwap(false, true) {
+		if noPanic {
+			return false
+		}
+		panic("cgo.Buffer.Free: double-free detected")
+	}
+
+	runtime.SetFinalizer(b, nil)
+	C.free(b.pointer)
+	b.pointer = nil
+	b.data = nil
+	return true
 }
