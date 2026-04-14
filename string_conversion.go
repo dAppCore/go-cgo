@@ -104,6 +104,7 @@ int cgo_call_18(uintptr_t fn, uintptr_t a0, uintptr_t a1, uintptr_t a2, uintptr_
 import "C"
 
 import (
+	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -225,6 +226,8 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		panic("cgo.Call: unsupported argument count: max 18")
 	}
 
+	runtime.KeepAlive(args)
+
 	if result != 0 {
 		return Errno(result)
 	}
@@ -256,6 +259,8 @@ func toCallArgValue(value interface{}) (uintptr, bool) {
 		return uintptr(typed), true
 	case uint64:
 		return uintptr(typed), true
+	case uintptr:
+		return typed, true
 	case C.size_t:
 		return uintptr(typed), true
 	case C.int:
@@ -325,12 +330,7 @@ func Errno(resultCode C.int) error {
 		return nil
 	}
 
-	recordedCode := resultCode
-	if recordedCode < 0 {
-		recordedCode = -recordedCode
-	}
-
-	return syscall.Errno(recordedCode)
+	return syscall.Errno(resultCode)
 }
 
 // WithErrno runs a C-style function and converts the C return value to (result, error).
