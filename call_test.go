@@ -167,6 +167,16 @@ func TestCall_UnsupportedArgType_Bad(t *testing.T) {
 	})
 }
 
+func TestCall_UnsupportedIntegerType_Bad(t *testing.T) {
+	mustPanic(t, "cgo.Call: unsupported argument type at argument 1: int8", func() {
+		_ = Call(testCallPtr0(), int8(1))
+	})
+
+	mustPanic(t, "cgo.Call: unsupported argument type at argument 1: uint16", func() {
+		_ = Call(testCallPtr0(), uint16(1))
+	})
+}
+
 func TestCall_NilArg_Bad(t *testing.T) {
 	mustPanic(t, "cgo.Call: unsupported argument type at argument 1: <nil>", func() {
 		_ = Call(testCallPtr0(), nil)

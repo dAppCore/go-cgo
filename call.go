@@ -83,7 +83,6 @@ import "C"
 
 import (
 	"fmt"
-	"reflect"
 	"runtime"
 	"unsafe"
 )
@@ -175,15 +174,21 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 			return 0
 		}
 		return uintptr(unsafe.Pointer(v))
+	case int:
+		return uintptr(v)
+	case int32:
+		return uintptr(v)
+	case int64:
+		return uintptr(v)
+	case uint:
+		return uintptr(v)
+	case uint32:
+		return uintptr(v)
+	case uint64:
+		return uintptr(v)
+	case uintptr:
+		return v
 	default:
-		rv := reflect.ValueOf(arg)
-		switch rv.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			return uintptr(rv.Int())
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			return uintptr(rv.Uint())
-		default:
-			panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: %T", position, arg))
-		}
+		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: %T", position, arg))
 	}
 }
