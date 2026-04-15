@@ -150,6 +150,17 @@ func TestCall_UnsafePointerArg_Good(t *testing.T) {
 	}
 }
 
+func TestCall_Uintptr_Good(t *testing.T) {
+	testCallReset()
+
+	if err := Call(testCallPtr1(), uintptr(16)); err != nil {
+		t.Fatalf("Call(uintptr) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 16 {
+		t.Fatalf("sum(uintptr) = %d, want 16", got)
+	}
+}
+
 func TestCall_18Args_Good(t *testing.T) {
 	testCallReset()
 	args := make([]interface{}, 18)

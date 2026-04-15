@@ -192,6 +192,8 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 		return uintptr(v)
 	case uint64:
 		return uintptr(v)
+	case uintptr:
+		return v
 	default:
 		if reflect.TypeOf(arg).Kind() == reflect.Uintptr {
 			return uintptr(reflect.ValueOf(arg).Uint())
