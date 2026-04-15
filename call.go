@@ -191,6 +191,7 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 		return uintptr(v)
 	case uint64:
 		return uintptr(v)
+	// cgo's `C.uintptr_t` maps to Go's `uintptr` on supported platforms.
 	case uintptr:
 		return v
 	default:
