@@ -119,9 +119,11 @@ func CString(s string) *C.char {
 	buf[len(s)] = 0
 
 	cString := (*C.char)(raw)
-	cStringAllocations.Store(uintptr(unsafe.Pointer(cString)), &cStringAllocation{
+	addr := uintptr(unsafe.Pointer(cString))
+	cStringAllocations.Store(addr, &cStringAllocation{
 		base: raw,
 	})
+	freedPointers.Delete(addr)
 	return cString
 }
 
@@ -138,6 +140,8 @@ func Free(ptr unsafe.Pointer) {
 		allocation := alloc.(*cStringAllocation)
 		if allocation.freed.CompareAndSwap(false, true) {
 			C.free(allocation.base)
+			cStringAllocations.Delete(addr)
+			freedPointers.Store(addr, struct{}{})
 		}
 		return
 	}
