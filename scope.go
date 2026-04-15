@@ -6,11 +6,14 @@ package cgo
 import "C"
 
 import (
+	"io"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
 )
+
+var _ io.Closer = (*Scope)(nil)
 
 // Scope tracks multiple C allocations and releases them together.
 //

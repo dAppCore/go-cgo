@@ -6,10 +6,13 @@ package cgo
 import "C"
 
 import (
+	"io"
 	"runtime"
 	"sync/atomic"
 	"unsafe"
 )
+
+var _ io.Closer = (*Buffer)(nil)
 
 // Buffer owns byte memory that can be passed safely to C.
 //
