@@ -84,7 +84,6 @@ import "C"
 
 import (
 	"fmt"
-	"reflect"
 	"runtime"
 	"unsafe"
 )
@@ -155,7 +154,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 
 func encodeCallArg(position int, arg interface{}) uintptr {
 	if arg == nil {
-		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: <nil>", position))
+		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
 	}
 
 	switch v := arg.(type) {
@@ -195,14 +194,6 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 	case uintptr:
 		return v
 	default:
-		value := reflect.ValueOf(arg)
-		switch value.Kind() {
-		case reflect.Int, reflect.Int32, reflect.Int64:
-			return uintptr(value.Int())
-		case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			return uintptr(value.Uint())
-		default:
-			panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: %T", position, arg))
-		}
+		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
 	}
 }
