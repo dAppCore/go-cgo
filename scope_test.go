@@ -84,6 +84,11 @@ func TestScope_FreeAll_Good(t *testing.T) {
 	}
 }
 
+func TestScope_FreeAll_Nil_Good(t *testing.T) {
+	var scope *Scope
+	scope.FreeAll()
+}
+
 func TestScope_FreeAll_Bad(t *testing.T) {
 	scope := NewScope()
 	scope.FreeAll()

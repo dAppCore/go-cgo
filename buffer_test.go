@@ -59,6 +59,11 @@ func TestBuffer_Free_Good(t *testing.T) {
 	})
 }
 
+func TestBuffer_Free_Nil_Good(t *testing.T) {
+	var buffer *Buffer
+	buffer.Free()
+}
+
 func TestBuffer_Free_Ugly(t *testing.T) {
 	buffer := NewBuffer(4)
 	buffer.Free()

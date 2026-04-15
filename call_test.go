@@ -246,6 +246,16 @@ func TestCall_Errno_Good(t *testing.T) {
 	}
 }
 
+func TestCall_GoString_Nil_Good(t *testing.T) {
+	if got := GoString(nil); got != "" {
+		t.Fatalf("GoString(nil) = %q, want empty string", got)
+	}
+}
+
+func TestCall_Free_Nil_Good(t *testing.T) {
+	Free(nil)
+}
+
 func TestCall_WithErrno_Good(t *testing.T) {
 	rc, err := testWithErrno(0)
 	if err != nil {
