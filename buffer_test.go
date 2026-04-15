@@ -129,6 +129,13 @@ func TestBuffer_Close_Good(t *testing.T) {
 	}
 }
 
+func TestBuffer_Close_Nil_Good(t *testing.T) {
+	var buffer *Buffer
+	if err := buffer.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+}
+
 func TestBuffer_Len_Good(t *testing.T) {
 	buffer := NewBuffer(5)
 	defer buffer.Free()

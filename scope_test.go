@@ -121,6 +121,13 @@ func TestScope_Close_Good(t *testing.T) {
 	}
 }
 
+func TestScope_Close_Nil_Good(t *testing.T) {
+	var scope *Scope
+	if err := scope.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+}
+
 func TestScope_IsFreed_Good(t *testing.T) {
 	if !((*Scope)(nil)).IsFreed() {
 		t.Fatal("nil scope should report freed")
