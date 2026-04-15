@@ -1,6 +1,9 @@
 package cgo
 
-import "testing"
+import (
+	"testing"
+	"unsafe"
+)
 
 func TestCall_SizeT_Good(t *testing.T) {
 	if got := SizeT(3); got != 3 {
@@ -49,6 +52,61 @@ func TestCall_1Args_Good(t *testing.T) {
 	}
 	if got := testCallSum(); got != 7 {
 		t.Fatalf("sum = %d, want 7", got)
+	}
+}
+
+func TestCall_BytesArg_Good(t *testing.T) {
+	testCallReset()
+
+	payload := []byte("go")
+	if err := Call(testCallPtr1(), payload); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got == 0 {
+		t.Fatal("sum = 0, want non-zero pointer value")
+	}
+}
+
+func TestCall_BufferArg_Good(t *testing.T) {
+	testCallReset()
+
+	buffer := NewBuffer(2)
+	defer buffer.Free()
+
+	if copied := buffer.CopyFrom([]byte("go")); copied != 2 {
+		t.Fatalf("CopyFrom copied = %d, want 2", copied)
+	}
+	if err := Call(testCallPtr1(), buffer); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got == 0 {
+		t.Fatal("sum = 0, want non-zero pointer value")
+	}
+}
+
+func TestCall_CStringArg_Good(t *testing.T) {
+	testCallReset()
+
+	ptr := CString("hello")
+	defer Free(unsafe.Pointer(ptr))
+
+	if err := Call(testCallPtr1(), ptr); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got == 0 {
+		t.Fatal("sum = 0, want non-zero pointer value")
+	}
+}
+
+func TestCall_UnsafePointerArg_Good(t *testing.T) {
+	testCallReset()
+
+	value := 42
+	if err := Call(testCallPtr1(), unsafe.Pointer(&value)); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got == 0 {
+		t.Fatal("sum = 0, want non-zero pointer value")
 	}
 }
 
