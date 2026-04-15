@@ -153,6 +153,28 @@ func TestCall_CTypes_Good(t *testing.T) {
 	}
 }
 
+func TestCall_CSizeT_Good(t *testing.T) {
+	testCallReset()
+
+	if err := testCallSizeT(13); err != nil {
+		t.Fatalf("Call(C.size_t) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 13 {
+		t.Fatalf("sum(C.size_t) = %d, want 13", got)
+	}
+}
+
+func TestCall_CInt_Good(t *testing.T) {
+	testCallReset()
+
+	if err := testCallCInt(14); err != nil {
+		t.Fatalf("Call(C.int) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 14 {
+		t.Fatalf("sum(C.int) = %d, want 14", got)
+	}
+}
+
 func TestCall_CUintptr_Good(t *testing.T) {
 	testCallReset()
 

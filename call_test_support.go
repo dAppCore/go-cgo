@@ -76,6 +76,14 @@ func testCallUintptr(value C.uintptr_t) error {
 	return Call(testCallPtr1(), value)
 }
 
+func testCallSizeT(value C.size_t) error {
+	return Call(testCallPtr1(), value)
+}
+
+func testCallCInt(value C.int) error {
+	return Call(testCallPtr1(), value)
+}
+
 func testMalloc(size C.size_t) unsafe.Pointer {
 	return C.malloc(size)
 }
