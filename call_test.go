@@ -13,6 +13,14 @@ func TestCall_SizeT_Good(t *testing.T) {
 	}
 }
 
+func TestCall_SizeT_Boundary_Good(t *testing.T) {
+	max := int(^uint32(0) >> 1)
+
+	if got := SizeT(max); uint64(got) != uint64(max) {
+		t.Fatalf("SizeT(max) = %d, want %d", got, max)
+	}
+}
+
 func TestCall_SizeT_Bad(t *testing.T) {
 	mustPanic(t, "cgo.SizeT: negative values are not representable as C.size_t", func() {
 		_ = SizeT(-1)
@@ -22,6 +30,14 @@ func TestCall_SizeT_Bad(t *testing.T) {
 func TestCall_Int_Good(t *testing.T) {
 	if got := Int(4); got != 4 {
 		t.Fatalf("Int(4) = %d, want 4", got)
+	}
+}
+
+func TestCall_Int_Boundary_Good(t *testing.T) {
+	max := int(^uint32(0) >> 1)
+
+	if got := Int(max); int(got) != max {
+		t.Fatalf("Int(max) = %d, want %d", got, max)
 	}
 }
 
@@ -69,6 +85,17 @@ func TestCall_BytesArg_Good(t *testing.T) {
 	}
 }
 
+func TestCall_BytesNil_Good(t *testing.T) {
+	testCallReset()
+
+	if err := Call(testCallPtr1(), []byte(nil)); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got != 0 {
+		t.Fatalf("sum = %d, want 0", got)
+	}
+}
+
 func TestCall_BufferArg_Good(t *testing.T) {
 	testCallReset()
 
@@ -83,6 +110,17 @@ func TestCall_BufferArg_Good(t *testing.T) {
 	}
 	if got := testCallSum(); got == 0 {
 		t.Fatal("sum = 0, want non-zero pointer value")
+	}
+}
+
+func TestCall_BufferNil_Good(t *testing.T) {
+	testCallReset()
+
+	if err := Call(testCallPtr1(), (*Buffer)(nil)); err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if got := testCallSum(); got != 0 {
+		t.Fatalf("sum = %d, want 0", got)
 	}
 }
 
