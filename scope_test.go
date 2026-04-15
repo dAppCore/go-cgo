@@ -26,6 +26,14 @@ func TestScope_Buffer_Good(t *testing.T) {
 	}
 }
 
+func TestScope_Buffer_Bad(t *testing.T) {
+	scope := NewScope()
+	scope.FreeAll()
+	mustPanic(t, "cgo.Scope.Buffer: scope is already freed", func() {
+		_ = scope.Buffer(1)
+	})
+}
+
 func TestScope_CString_Good(t *testing.T) {
 	scope := NewScope()
 	defer scope.FreeAll()
@@ -37,6 +45,14 @@ func TestScope_CString_Good(t *testing.T) {
 	if got := GoString(cString); got != "hello" {
 		t.Fatalf("GoString(CString) = %q, want %q", got, "hello")
 	}
+}
+
+func TestScope_CString_Bad(t *testing.T) {
+	scope := NewScope()
+	scope.FreeAll()
+	mustPanic(t, "cgo.Scope.CString: scope is already freed", func() {
+		_ = scope.CString("x")
+	})
 }
 
 func TestScope_FreeAll_Good(t *testing.T) {
@@ -76,8 +92,15 @@ func TestScope_FreeAll_Ugly(t *testing.T) {
 
 func TestScope_Close_Good(t *testing.T) {
 	scope := NewScope()
+	buffer := scope.Buffer(1)
 	if err := scope.Close(); err != nil {
 		t.Fatalf("Close() error = %v", err)
+	}
+	if !scope.IsFreed() {
+		t.Fatal("scope should be freed after Close()")
+	}
+	if !buffer.IsFreed() {
+		t.Fatal("buffer should be freed by Close()")
 	}
 }
 
