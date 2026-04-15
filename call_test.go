@@ -134,6 +134,25 @@ func TestCall_19Args_Bad(t *testing.T) {
 	})
 }
 
+func TestCall_CTypes_Good(t *testing.T) {
+	testCallReset()
+
+	if err := Call(testCallPtr1(), SizeT(11)); err != nil {
+		t.Fatalf("Call(SizeT) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 11 {
+		t.Fatalf("sum(SizeT) = %d, want 11", got)
+	}
+
+	testCallReset()
+	if err := Call(testCallPtr1(), Int(12)); err != nil {
+		t.Fatalf("Call(Int) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 12 {
+		t.Fatalf("sum(Int) = %d, want 12", got)
+	}
+}
+
 func TestCall_Errno_Good(t *testing.T) {
 	if err := Errno(0); err != nil {
 		t.Fatalf("Errno(0) = %v, want nil", err)
@@ -159,6 +178,12 @@ func TestCall_WithErrno_Good(t *testing.T) {
 	if err == nil {
 		t.Fatal("WithErrno error is nil, want error")
 	}
+}
+
+func TestCall_NilFunction_Bad(t *testing.T) {
+	mustPanic(t, "cgo.Call: function pointer is nil", func() {
+		_ = Call(nil)
+	})
 }
 
 func TestCall_UnsupportedArgType_Bad(t *testing.T) {

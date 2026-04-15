@@ -85,7 +85,6 @@ import "C"
 import (
 	"fmt"
 	"reflect"
-	"strings"
 	"runtime"
 	"unsafe"
 )
@@ -177,6 +176,10 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 			return 0
 		}
 		return uintptr(unsafe.Pointer(v))
+	case C.size_t:
+		return uintptr(v)
+	case C.int:
+		return uintptr(v)
 	case int:
 		return uintptr(v)
 	case int32:
@@ -199,14 +202,6 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 		case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 			return uintptr(value.Uint())
 		default:
-			if strings.HasPrefix(value.Type().Name(), "_Ctype_") {
-				switch value.Kind() {
-				case reflect.Int, reflect.Int32, reflect.Int64:
-					return uintptr(value.Int())
-				case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-					return uintptr(value.Uint())
-				}
-			}
 			panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: %T", position, arg))
 		}
 	}
