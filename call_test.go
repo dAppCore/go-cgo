@@ -138,6 +138,12 @@ func TestCall_CStringArg_Good(t *testing.T) {
 	}
 }
 
+func TestCall_CStringFreeIdempotent_Good(t *testing.T) {
+	ptr := CString("hello")
+	Free(unsafe.Pointer(ptr))
+	Free(unsafe.Pointer(ptr))
+}
+
 func TestCall_UnsafePointerArg_Good(t *testing.T) {
 	testCallReset()
 
