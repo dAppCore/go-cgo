@@ -153,6 +153,10 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 }
 
 func encodeCallArg(position int, arg interface{}) uintptr {
+	if arg == nil {
+		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d: <nil>", position))
+	}
+
 	switch v := arg.(type) {
 	case unsafe.Pointer:
 		return uintptr(v)

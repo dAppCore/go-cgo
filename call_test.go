@@ -108,3 +108,9 @@ func TestCall_UnsupportedArgType_Bad(t *testing.T) {
 		_ = Call(testCallPtr0(), "bad")
 	})
 }
+
+func TestCall_NilArg_Bad(t *testing.T) {
+	mustPanic(t, "cgo.Call: unsupported argument type at argument 1: <nil>", func() {
+		_ = Call(testCallPtr0(), nil)
+	})
+}
