@@ -44,6 +44,10 @@ func NewScope() *Scope {
 //
 //	buffer := scope.Buffer(64)
 func (s *Scope) Buffer(size int) *Buffer {
+	if s == nil {
+		panic("cgo.Scope.Buffer: scope is already freed")
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -60,6 +64,10 @@ func (s *Scope) Buffer(size int) *Buffer {
 //
 //	cString := scope.CString("hello")
 func (s *Scope) CString(value string) *C.char {
+	if s == nil {
+		panic("cgo.Scope.CString: scope is already freed")
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

@@ -34,6 +34,12 @@ func TestScope_Buffer_Bad(t *testing.T) {
 	})
 }
 
+func TestScope_Buffer_Nil_Bad(t *testing.T) {
+	mustPanic(t, "cgo.Scope.Buffer: scope is already freed", func() {
+		_ = ((*Scope)(nil)).Buffer(1)
+	})
+}
+
 func TestScope_CString_Good(t *testing.T) {
 	scope := NewScope()
 	defer scope.FreeAll()
@@ -52,6 +58,12 @@ func TestScope_CString_Bad(t *testing.T) {
 	scope.FreeAll()
 	mustPanic(t, "cgo.Scope.CString: scope is already freed", func() {
 		_ = scope.CString("x")
+	})
+}
+
+func TestScope_CString_Nil_Bad(t *testing.T) {
+	mustPanic(t, "cgo.Scope.CString: scope is already freed", func() {
+		_ = ((*Scope)(nil)).CString("x")
 	})
 }
 
