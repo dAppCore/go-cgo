@@ -151,4 +151,5 @@ func Free(ptr unsafe.Pointer) {
 	}
 
 	C.free(ptr)
+	freedPointers.Store(addr, struct{}{})
 }

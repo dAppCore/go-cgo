@@ -2,6 +2,7 @@ package cgo
 
 /*
 #include <stdint.h>
+#include <stdlib.h>
 
 static uintptr_t cgo_test_sum = 0;
 static int cgo_test_rc = 0;
@@ -73,4 +74,8 @@ func testWithErrno(rc C.int) (int, error) {
 
 func testCallUintptr(value C.uintptr_t) error {
 	return Call(testCallPtr1(), value)
+}
+
+func testMalloc(size C.size_t) unsafe.Pointer {
+	return C.malloc(size)
 }

@@ -28,3 +28,13 @@ func TestStringConversion_CString_Free_Good(t *testing.T) {
 	Free(unsafe.Pointer(ptr))
 	Free(unsafe.Pointer(ptr))
 }
+
+func TestStringConversion_Free_GenericMalloc_Good(t *testing.T) {
+	ptr := testMalloc(8)
+	if ptr == nil {
+		t.Fatal("testMalloc returned nil")
+	}
+
+	Free(ptr)
+	Free(ptr)
+}
