@@ -84,6 +84,7 @@ import "C"
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 	"unsafe"
 )
@@ -195,6 +196,9 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 	case uintptr:
 		return v
 	default:
+		if reflect.TypeOf(arg).Kind() == reflect.Uintptr {
+			return uintptr(reflect.ValueOf(arg).Uint())
+		}
 		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
 	}
 }

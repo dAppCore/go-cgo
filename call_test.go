@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+type testUintptr uintptr
+
 func TestCall_SizeT_Good(t *testing.T) {
 	if got := SizeT(3); got != 3 {
 		t.Fatalf("SizeT(3) = %d, want 3", got)
@@ -183,6 +185,17 @@ func TestCall_CUintptr_Good(t *testing.T) {
 	}
 	if got := testCallSum(); got != 13 {
 		t.Fatalf("sum(C.uintptr_t) = %d, want 13", got)
+	}
+}
+
+func TestCall_UintptrLike_Good(t *testing.T) {
+	testCallReset()
+
+	if err := Call(testCallPtr1(), testUintptr(15)); err != nil {
+		t.Fatalf("Call(uintptr-like) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 15 {
+		t.Fatalf("sum(uintptr-like) = %d, want 15", got)
 	}
 }
 
