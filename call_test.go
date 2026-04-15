@@ -153,6 +153,17 @@ func TestCall_CTypes_Good(t *testing.T) {
 	}
 }
 
+func TestCall_CUintptr_Good(t *testing.T) {
+	testCallReset()
+
+	if err := testCallUintptr(13); err != nil {
+		t.Fatalf("Call(C.uintptr_t) returned error: %v", err)
+	}
+	if got := testCallSum(); got != 13 {
+		t.Fatalf("sum(C.uintptr_t) = %d, want 13", got)
+	}
+}
+
 func TestCall_Errno_Good(t *testing.T) {
 	if err := Errno(0); err != nil {
 		t.Fatalf("Errno(0) = %v, want nil", err)

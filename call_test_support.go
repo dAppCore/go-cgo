@@ -70,3 +70,7 @@ func testWithErrno(rc C.int) (int, error) {
 		return rc
 	})
 }
+
+func testCallUintptr(value C.uintptr_t) error {
+	return Call(testCallPtr1(), value)
+}
