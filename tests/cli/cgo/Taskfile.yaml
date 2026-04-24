@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Validate the cgo CLI artifact.
+    dir: ../../..
+    cmds:
+      - |
+        export GOCACHE="${GOCACHE:-/tmp/go-cgo-gocache}"
+        export GOMODCACHE="${GOMODCACHE:-/tmp/go-cgo-gomodcache}"
+        mkdir -p "$GOCACHE" "$GOMODCACHE"
+        bin="$(mktemp -t core-cgo.XXXXXX)"
+        trap 'rm -f "$bin"' EXIT
+        go build -o "$bin" ./tests/cli/cgo
+        "$bin"
