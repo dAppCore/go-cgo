@@ -1,161 +1,223 @@
 package cgo
 
-import (
-	"runtime"
-	"testing"
-)
-
-func mustPanic(t *testing.T, want string, fn func()) {
-	t.Helper()
-
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatalf("expected panic %q", want)
-		}
-		got := r.(string)
-		if got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	fn()
-}
-
-func TestBuffer_NewBuffer_Good(t *testing.T) {
+func TestBuffer_NewBuffer_Good(t *T) {
 	buffer := NewBuffer(8)
-	if buffer == nil {
-		t.Fatal("buffer is nil")
-	}
-	if buffer.IsFreed() {
-		t.Fatal("buffer should not start freed")
-	}
-	if buffer.Len() != 8 {
-		t.Fatalf("Len() = %d, want 8", buffer.Len())
-	}
-	if got := len(buffer.Bytes()); got != 8 {
-		t.Fatalf("Bytes len = %d, want 8", got)
-	}
-	if buffer.Ptr() == nil {
-		t.Fatal("Ptr() is nil")
-	}
-	buffer.Free()
+	defer buffer.Free()
+
+	AssertNotNil(t, buffer)
+	AssertFalse(t, buffer.IsFreed())
+	AssertEqual(t, 8, buffer.Len())
+	AssertLen(t, buffer.Bytes(), 8)
+	AssertNotNil(t, buffer.Ptr())
 }
 
-func TestBuffer_NewBuffer_Bad(t *testing.T) {
-	mustPanic(t, "cgo.NewBuffer: size must be non-negative", func() {
+func TestBuffer_NewBuffer_Bad(t *T) {
+	AssertPanicsWithError(t, "size must be non-negative", func() {
 		_ = NewBuffer(-1)
 	})
-}
-
-func TestBuffer_Free_Good(t *testing.T) {
-	buffer := NewBuffer(4)
-	buffer.Free()
-	if !buffer.IsFreed() {
-		t.Fatal("buffer should be freed")
-	}
-	mustPanic(t, "cgo.Buffer.Free: double-free detected", func() {
+	AssertNotPanics(t, func() {
+		buffer := NewBuffer(1)
 		buffer.Free()
 	})
 }
 
-func TestBuffer_Free_Nil_Good(t *testing.T) {
-	var buffer *Buffer
-	buffer.Free()
+func TestBuffer_NewBuffer_Ugly(t *T) {
+	buffer := NewBuffer(0)
+	defer buffer.Free()
+
+	AssertEqual(t, 0, buffer.Len())
+	AssertEmpty(t, buffer.Bytes())
+	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
 }
 
-func TestBuffer_Free_Ugly(t *testing.T) {
+func TestBuffer_Buffer_Free_Good(t *T) {
 	buffer := NewBuffer(4)
 	buffer.Free()
-	buffer = nil
-	runtime.GC()
-	runtime.GC()
+
+	AssertTrue(t, buffer.IsFreed())
+	AssertPanicsWithError(t, "double-free detected", func() {
+		buffer.Free()
+	})
 }
 
-func TestBuffer_CopyFrom_Good(t *testing.T) {
+func TestBuffer_Buffer_Free_Bad(t *T) {
+	buffer := NewBuffer(4)
+	buffer.Free()
+
+	AssertPanicsWithError(t, "double-free detected", func() {
+		buffer.Free()
+	})
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Free_Ugly(t *T) {
+	var buffer *Buffer
+
+	AssertTrue(t, buffer.IsFreed())
+	AssertNotPanics(t, func() {
+		buffer.Free()
+	})
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Close_Good(t *T) {
+	buffer := NewBuffer(1)
+	err := buffer.Close()
+
+	AssertNoError(t, err)
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Close_Bad(t *T) {
+	buffer := NewBuffer(1)
+	RequireNoError(t, buffer.Close())
+
+	AssertPanicsWithError(t, "double-free detected", func() {
+		_ = buffer.Close()
+	})
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Close_Ugly(t *T) {
+	var buffer *Buffer
+	err := buffer.Close()
+
+	AssertNoError(t, err)
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_CopyFrom_Good(t *T) {
 	buffer := NewBuffer(3)
 	defer buffer.Free()
 
-	if copied := buffer.CopyFrom([]byte("abcd")); copied != 3 {
-		t.Fatalf("CopyFrom copied = %d, want 3", copied)
-	}
-	if got := string(buffer.Bytes()); got != "abc" {
-		t.Fatalf("buffer contents = %q, want %q", got, "abc")
-	}
+	copied := buffer.CopyFrom([]byte("abcd"))
+	AssertEqual(t, 3, copied)
+	AssertEqual(t, "abc", string(buffer.Bytes()))
 }
 
-func TestBuffer_CopyFrom_Bad(t *testing.T) {
+func TestBuffer_Buffer_CopyFrom_Bad(t *T) {
 	buffer := NewBuffer(1)
 	buffer.Free()
-	mustPanic(t, "cgo.Buffer: use-after-free detected", func() {
-		buffer.CopyFrom([]byte("x"))
+
+	AssertPanicsWithError(t, "use-after-free detected", func() {
+		_ = buffer.CopyFrom([]byte("x"))
 	})
+	AssertTrue(t, buffer.IsFreed())
 }
 
-func TestBuffer_Bytes_Good(t *testing.T) {
+func TestBuffer_Buffer_CopyFrom_Ugly(t *T) {
+	buffer := NewBuffer(0)
+	defer buffer.Free()
+
+	copied := buffer.CopyFrom([]byte("abc"))
+	AssertEqual(t, 0, copied)
+	AssertEmpty(t, buffer.Bytes())
+}
+
+func TestBuffer_Buffer_Bytes_Good(t *T) {
 	buffer := NewBuffer(2)
 	defer buffer.Free()
 
-	b := buffer.Bytes()
-	if len(b) != 2 {
-		t.Fatalf("len(Bytes()) = %d, want 2", len(b))
-	}
+	bytes := buffer.Bytes()
+	bytes[0] = 'g'
+	bytes[1] = 'o'
+	AssertEqual(t, "go", string(buffer.Bytes()))
 }
 
-func TestBuffer_Bytes_Ugly(t *testing.T) {
+func TestBuffer_Buffer_Bytes_Bad(t *T) {
 	buffer := NewBuffer(2)
 	buffer.Free()
-	mustPanic(t, "cgo.Buffer: use-after-free detected", func() {
+
+	AssertPanicsWithError(t, "use-after-free detected", func() {
 		_ = buffer.Bytes()
 	})
+	AssertTrue(t, buffer.IsFreed())
 }
 
-func TestBuffer_Ptr_Good(t *testing.T) {
+func TestBuffer_Buffer_Bytes_Ugly(t *T) {
+	var buffer *Buffer
+
+	AssertPanicsWithError(t, "buffer is nil", func() {
+		_ = buffer.Bytes()
+	})
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Ptr_Good(t *T) {
 	buffer := NewBuffer(2)
 	defer buffer.Free()
 
-	if buffer.Ptr() == nil {
-		t.Fatal("Ptr() is nil")
-	}
+	pointer := buffer.Ptr()
+	AssertNotNil(t, pointer)
+	AssertFalse(t, buffer.IsFreed())
 }
 
-func TestBuffer_Close_Good(t *testing.T) {
-	buffer := NewBuffer(1)
-	if err := buffer.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-	if !buffer.IsFreed() {
-		t.Fatal("buffer should be freed after Close()")
-	}
+func TestBuffer_Buffer_Ptr_Bad(t *T) {
+	buffer := NewBuffer(2)
+	buffer.Free()
+
+	AssertPanicsWithError(t, "use-after-free detected", func() {
+		_ = buffer.Ptr()
+	})
+	AssertTrue(t, buffer.IsFreed())
 }
 
-func TestBuffer_Close_Nil_Good(t *testing.T) {
-	var buffer *Buffer
-	if err := buffer.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
+func TestBuffer_Buffer_Ptr_Ugly(t *T) {
+	buffer := NewBuffer(0)
+	defer buffer.Free()
+
+	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
+	AssertEqual(t, 0, buffer.Len())
 }
 
-func TestBuffer_Len_Good(t *testing.T) {
+func TestBuffer_Buffer_Len_Good(t *T) {
 	buffer := NewBuffer(5)
 	defer buffer.Free()
 
-	if got := buffer.Len(); got != 5 {
-		t.Fatalf("Len() = %d, want 5", got)
-	}
+	length := buffer.Len()
+	AssertEqual(t, 5, length)
+	AssertLen(t, buffer.Bytes(), 5)
 }
 
-func TestBuffer_IsFreed_Good(t *testing.T) {
-	if !((*Buffer)(nil)).IsFreed() {
-		t.Fatal("nil buffer should report freed")
-	}
-
+func TestBuffer_Buffer_Len_Bad(t *T) {
 	buffer := NewBuffer(1)
-	if buffer.IsFreed() {
-		t.Fatal("buffer should not be freed yet")
-	}
 	buffer.Free()
-	if !buffer.IsFreed() {
-		t.Fatal("buffer should report freed")
-	}
+
+	AssertPanicsWithError(t, "use-after-free detected", func() {
+		_ = buffer.Len()
+	})
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_Len_Ugly(t *T) {
+	buffer := NewBuffer(0)
+	defer buffer.Free()
+
+	AssertEqual(t, 0, buffer.Len())
+	AssertEmpty(t, buffer.Bytes())
+}
+
+func TestBuffer_Buffer_IsFreed_Good(t *T) {
+	buffer := NewBuffer(1)
+	AssertFalse(t, buffer.IsFreed())
+
+	buffer.Free()
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestBuffer_Buffer_IsFreed_Bad(t *T) {
+	buffer := NewBuffer(0)
+	defer buffer.Free()
+
+	AssertFalse(t, buffer.IsFreed())
+	AssertEqual(t, 0, buffer.Len())
+}
+
+func TestBuffer_Buffer_IsFreed_Ugly(t *T) {
+	var buffer *Buffer
+
+	AssertTrue(t, buffer.IsFreed())
+	AssertNotPanics(t, func() {
+		buffer.Free()
+	})
 }

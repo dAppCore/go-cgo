@@ -1,144 +1,170 @@
 package cgo
 
-import (
-	"runtime"
-	"testing"
-)
-
-func TestScope_NewScope_Good(t *testing.T) {
+func TestScope_NewScope_Good(t *T) {
 	scope := NewScope()
-	if scope == nil {
-		t.Fatal("scope is nil")
-	}
-	if scope.IsFreed() {
-		t.Fatal("scope should not start freed")
-	}
-	scope.FreeAll()
+	defer scope.FreeAll()
+
+	AssertNotNil(t, scope)
+	AssertFalse(t, scope.IsFreed())
+	AssertNotNil(t, scope.Buffer(1))
 }
 
-func TestScope_Buffer_Good(t *testing.T) {
+func TestScope_NewScope_Bad(t *T) {
+	first := NewScope()
+	second := NewScope()
+	defer second.FreeAll()
+
+	first.FreeAll()
+	AssertTrue(t, first.IsFreed())
+	AssertFalse(t, second.IsFreed())
+}
+
+func TestScope_NewScope_Ugly(t *T) {
+	scope := NewScope()
+
+	AssertNotPanics(t, func() {
+		scope.FreeAll()
+	})
+	AssertTrue(t, scope.IsFreed())
+}
+
+func TestScope_Scope_Buffer_Good(t *T) {
 	scope := NewScope()
 	defer scope.FreeAll()
 
 	buffer := scope.Buffer(4)
-	if buffer == nil {
-		t.Fatal("buffer is nil")
-	}
+	AssertNotNil(t, buffer)
+	AssertEqual(t, 4, buffer.Len())
 }
 
-func TestScope_Buffer_Bad(t *testing.T) {
+func TestScope_Scope_Buffer_Bad(t *T) {
 	scope := NewScope()
 	scope.FreeAll()
-	mustPanic(t, "cgo.Scope.Buffer: scope is already freed", func() {
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
 		_ = scope.Buffer(1)
 	})
+	AssertTrue(t, scope.IsFreed())
 }
 
-func TestScope_Buffer_Nil_Bad(t *testing.T) {
-	mustPanic(t, "cgo.Scope.Buffer: scope is already freed", func() {
-		_ = ((*Scope)(nil)).Buffer(1)
+func TestScope_Scope_Buffer_Ugly(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	AssertPanicsWithError(t, "size must be non-negative", func() {
+		_ = scope.Buffer(-1)
 	})
+	AssertFalse(t, scope.IsFreed())
 }
 
-func TestScope_CString_Good(t *testing.T) {
+func TestScope_Scope_CString_Good(t *T) {
 	scope := NewScope()
 	defer scope.FreeAll()
 
 	cString := scope.CString("hello")
-	if cString == nil {
-		t.Fatal("CString is nil")
-	}
-	if got := GoString(cString); got != "hello" {
-		t.Fatalf("GoString(CString) = %q, want %q", got, "hello")
-	}
+	AssertNotNil(t, cString)
+	AssertEqual(t, "hello", GoString(cString))
 }
 
-func TestScope_CString_Bad(t *testing.T) {
+func TestScope_Scope_CString_Bad(t *T) {
 	scope := NewScope()
 	scope.FreeAll()
-	mustPanic(t, "cgo.Scope.CString: scope is already freed", func() {
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
 		_ = scope.CString("x")
 	})
+	AssertTrue(t, scope.IsFreed())
 }
 
-func TestScope_CString_Nil_Bad(t *testing.T) {
-	mustPanic(t, "cgo.Scope.CString: scope is already freed", func() {
-		_ = ((*Scope)(nil)).CString("x")
-	})
+func TestScope_Scope_CString_Ugly(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	cString := scope.CString("")
+	AssertNotNil(t, cString)
+	AssertEqual(t, "", GoString(cString))
 }
 
-func TestScope_FreeAll_Good(t *testing.T) {
+func TestScope_Scope_FreeAll_Good(t *T) {
 	scope := NewScope()
 	buffer := scope.Buffer(2)
 	cString := scope.CString("hi")
 
 	scope.FreeAll()
-	if !scope.IsFreed() {
-		t.Fatal("scope should be freed")
-	}
-	if !buffer.IsFreed() {
-		t.Fatal("buffer should be freed with scope")
-	}
-	if cString == nil {
-		t.Fatal("CString is nil")
-	}
+	AssertTrue(t, scope.IsFreed())
+	AssertTrue(t, buffer.IsFreed())
+	AssertNotNil(t, cString)
 }
 
-func TestScope_FreeAll_Nil_Good(t *testing.T) {
-	var scope *Scope
-	scope.FreeAll()
-}
-
-func TestScope_FreeAll_Bad(t *testing.T) {
+func TestScope_Scope_FreeAll_Bad(t *T) {
 	scope := NewScope()
 	scope.FreeAll()
-	mustPanic(t, "cgo.Scope.FreeAll: double-free detected", func() {
+
+	AssertPanicsWithError(t, "double-free detected", func() {
 		scope.FreeAll()
 	})
+	AssertTrue(t, scope.IsFreed())
 }
 
-func TestScope_FreeAll_Ugly(t *testing.T) {
-	scope := NewScope()
-	scope.Buffer(1)
-	scope.CString("x")
-	scope.FreeAll()
-	scope = nil
-	runtime.GC()
-	runtime.GC()
+func TestScope_Scope_FreeAll_Ugly(t *T) {
+	var scope *Scope
+
+	AssertTrue(t, scope.IsFreed())
+	AssertNotPanics(t, func() {
+		scope.FreeAll()
+	})
+	AssertTrue(t, scope.IsFreed())
 }
 
-func TestScope_Close_Good(t *testing.T) {
+func TestScope_Scope_Close_Good(t *T) {
 	scope := NewScope()
 	buffer := scope.Buffer(1)
-	if err := scope.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-	if !scope.IsFreed() {
-		t.Fatal("scope should be freed after Close()")
-	}
-	if !buffer.IsFreed() {
-		t.Fatal("buffer should be freed by Close()")
-	}
+	err := scope.Close()
+
+	AssertNoError(t, err)
+	AssertTrue(t, scope.IsFreed())
+	AssertTrue(t, buffer.IsFreed())
 }
 
-func TestScope_Close_Nil_Good(t *testing.T) {
-	var scope *Scope
-	if err := scope.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-}
-
-func TestScope_IsFreed_Good(t *testing.T) {
-	if !((*Scope)(nil)).IsFreed() {
-		t.Fatal("nil scope should report freed")
-	}
-
+func TestScope_Scope_Close_Bad(t *T) {
 	scope := NewScope()
-	if scope.IsFreed() {
-		t.Fatal("scope should not be freed yet")
-	}
+	RequireNoError(t, scope.Close())
+
+	AssertPanicsWithError(t, "double-free detected", func() {
+		_ = scope.Close()
+	})
+	AssertTrue(t, scope.IsFreed())
+}
+
+func TestScope_Scope_Close_Ugly(t *T) {
+	var scope *Scope
+	err := scope.Close()
+
+	AssertNoError(t, err)
+	AssertTrue(t, scope.IsFreed())
+}
+
+func TestScope_Scope_IsFreed_Good(t *T) {
+	scope := NewScope()
+	AssertFalse(t, scope.IsFreed())
+
 	scope.FreeAll()
-	if !scope.IsFreed() {
-		t.Fatal("scope should report freed")
-	}
+	AssertTrue(t, scope.IsFreed())
+}
+
+func TestScope_Scope_IsFreed_Bad(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	AssertFalse(t, scope.IsFreed())
+	AssertNotNil(t, scope.Buffer(1))
+}
+
+func TestScope_Scope_IsFreed_Ugly(t *T) {
+	var scope *Scope
+
+	AssertTrue(t, scope.IsFreed())
+	AssertNotPanics(t, func() {
+		scope.FreeAll()
+	})
 }

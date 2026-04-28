@@ -1,40 +1,158 @@
 package cgo
 
 import (
-	"testing"
+	"syscall"
 	"unsafe"
 )
 
-func TestStringConversion_GoString_Nil_Good(t *testing.T) {
-	if got := GoString(nil); got != "" {
-		t.Fatalf("GoString(nil) = %q, want empty string", got)
-	}
+func TestStringConversion_SizeT_Good(t *T) {
+	got := SizeT(3)
+
+	AssertEqual(t, uint64(3), uint64(got))
+	AssertNotPanics(t, func() {
+		_ = SizeT(1)
+	})
 }
 
-func TestStringConversion_Free_Nil_Good(t *testing.T) {
-	Free(nil)
+func TestStringConversion_SizeT_Bad(t *T) {
+	AssertPanicsWithError(t, "negative values are not representable", func() {
+		_ = SizeT(-1)
+	})
+	AssertNotPanics(t, func() {
+		_ = SizeT(0)
+	})
 }
 
-func TestStringConversion_CString_Free_Good(t *testing.T) {
+func TestStringConversion_SizeT_Ugly(t *T) {
+	got := SizeT(0)
+
+	AssertEqual(t, uint64(0), uint64(got))
+	AssertNotPanics(t, func() {
+		_ = SizeT(int(^uint(0) >> 1))
+	})
+}
+
+func TestStringConversion_Int_Good(t *T) {
+	got := Int(4)
+
+	AssertEqual(t, 4, int(got))
+	AssertNotPanics(t, func() {
+		_ = Int(1)
+	})
+}
+
+func TestStringConversion_Int_Bad(t *T) {
+	AssertPanicsWithError(t, "value exceeds C.int range", func() {
+		_ = Int(-1)
+	})
+	AssertNotPanics(t, func() {
+		_ = Int(0)
+	})
+}
+
+func TestStringConversion_Int_Ugly(t *T) {
+	got := Int(0)
+
+	AssertEqual(t, 0, int(got))
+	AssertNotPanics(t, func() {
+		_ = Int(int(^uint32(0) >> 1))
+	})
+}
+
+func TestStringConversion_Errno_Good(t *T) {
+	err := Errno(0)
+
+	AssertNoError(t, err)
+	AssertNil(t, err)
+}
+
+func TestStringConversion_Errno_Bad(t *T) {
+	err := Errno(5)
+
+	AssertError(t, err)
+	AssertErrorIs(t, err, syscall.Errno(5))
+}
+
+func TestStringConversion_Errno_Ugly(t *T) {
+	err := Errno(-1)
+
+	AssertError(t, err)
+	AssertNotEqual(t, "", err.Error())
+}
+
+func TestStringConversion_GoString_Good(t *T) {
 	ptr := CString("hello")
-	if ptr == nil {
-		t.Fatal("CString returned nil")
-	}
+	defer Free(unsafe.Pointer(ptr))
 
-	if got := GoString(ptr); got != "hello" {
-		t.Fatalf("GoString(CString) = %q, want %q", got, "hello")
-	}
-
-	Free(unsafe.Pointer(ptr))
-	Free(unsafe.Pointer(ptr))
+	got := GoString(ptr)
+	AssertEqual(t, "hello", got)
+	AssertNotNil(t, ptr)
 }
 
-func TestStringConversion_Free_GenericMalloc_Good(t *testing.T) {
+func TestStringConversion_GoString_Bad(t *T) {
+	got := GoString(nil)
+
+	AssertEqual(t, "", got)
+	AssertNotPanics(t, func() {
+		_ = GoString(nil)
+	})
+}
+
+func TestStringConversion_GoString_Ugly(t *T) {
+	ptr := CString("hello\x00ignored")
+	defer Free(unsafe.Pointer(ptr))
+
+	got := GoString(ptr)
+	AssertEqual(t, "hello", got)
+}
+
+func TestStringConversion_CString_Good(t *T) {
+	ptr := CString("hello")
+	defer Free(unsafe.Pointer(ptr))
+
+	AssertNotNil(t, ptr)
+	AssertEqual(t, "hello", GoString(ptr))
+}
+
+func TestStringConversion_CString_Bad(t *T) {
+	ptr := CString("")
+	defer Free(unsafe.Pointer(ptr))
+
+	AssertNotNil(t, ptr)
+	AssertEqual(t, "", GoString(ptr))
+}
+
+func TestStringConversion_CString_Ugly(t *T) {
+	ptr := CString("go\x00cgo")
+	defer Free(unsafe.Pointer(ptr))
+
+	AssertNotNil(t, ptr)
+	AssertEqual(t, "go", GoString(ptr))
+}
+
+func TestStringConversion_Free_Good(t *T) {
+	ptr := CString("hello")
+
+	AssertNotNil(t, ptr)
+	Free(unsafe.Pointer(ptr))
+	AssertNotPanics(t, func() {
+		Free(unsafe.Pointer(ptr))
+	})
+}
+
+func TestStringConversion_Free_Bad(t *T) {
+	AssertNotPanics(t, func() {
+		Free(nil)
+	})
+	AssertEqual(t, "", GoString(nil))
+}
+
+func TestStringConversion_Free_Ugly(t *T) {
 	ptr := testMalloc(8)
-	if ptr == nil {
-		t.Fatal("testMalloc returned nil")
-	}
+	AssertNotNil(t, ptr)
 
 	Free(ptr)
-	Free(ptr)
+	AssertNotPanics(t, func() {
+		Free(ptr)
+	})
 }

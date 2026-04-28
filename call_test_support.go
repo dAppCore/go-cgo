@@ -125,21 +125,6 @@ static int cgo_test_fn_18(
 static void* cgo_test_ptr_0(void) { return (void*)cgo_test_fn_0; }
 static void* cgo_test_ptr_1(void) { return (void*)cgo_test_fn_1; }
 static void* cgo_test_ptr_2(void) { return (void*)cgo_test_fn_2; }
-static void* cgo_test_ptr_3(void) { return (void*)cgo_test_fn_3; }
-static void* cgo_test_ptr_4(void) { return (void*)cgo_test_fn_4; }
-static void* cgo_test_ptr_5(void) { return (void*)cgo_test_fn_5; }
-static void* cgo_test_ptr_6(void) { return (void*)cgo_test_fn_6; }
-static void* cgo_test_ptr_7(void) { return (void*)cgo_test_fn_7; }
-static void* cgo_test_ptr_8(void) { return (void*)cgo_test_fn_8; }
-static void* cgo_test_ptr_9(void) { return (void*)cgo_test_fn_9; }
-static void* cgo_test_ptr_10(void) { return (void*)cgo_test_fn_10; }
-static void* cgo_test_ptr_11(void) { return (void*)cgo_test_fn_11; }
-static void* cgo_test_ptr_12(void) { return (void*)cgo_test_fn_12; }
-static void* cgo_test_ptr_13(void) { return (void*)cgo_test_fn_13; }
-static void* cgo_test_ptr_14(void) { return (void*)cgo_test_fn_14; }
-static void* cgo_test_ptr_15(void) { return (void*)cgo_test_fn_15; }
-static void* cgo_test_ptr_16(void) { return (void*)cgo_test_fn_16; }
-static void* cgo_test_ptr_17(void) { return (void*)cgo_test_fn_17; }
 static void* cgo_test_ptr_18(void) { return (void*)cgo_test_fn_18; }
 */
 import "C"
@@ -150,8 +135,8 @@ func testCallReset() {
 	C.cgo_test_reset()
 }
 
-func testCallSetRC(rc C.int) {
-	C.cgo_test_set_rc(rc)
+func testCallSetRC(rc int) {
+	C.cgo_test_set_rc(C.int(rc))
 }
 
 func testCallPtr0() unsafe.Pointer {
@@ -162,22 +147,10 @@ func testCallPtr1() unsafe.Pointer {
 	return C.cgo_test_ptr_1()
 }
 
-func testCallPtr2() unsafe.Pointer  { return C.cgo_test_ptr_2() }
-func testCallPtr3() unsafe.Pointer  { return C.cgo_test_ptr_3() }
-func testCallPtr4() unsafe.Pointer  { return C.cgo_test_ptr_4() }
-func testCallPtr5() unsafe.Pointer  { return C.cgo_test_ptr_5() }
-func testCallPtr6() unsafe.Pointer  { return C.cgo_test_ptr_6() }
-func testCallPtr7() unsafe.Pointer  { return C.cgo_test_ptr_7() }
-func testCallPtr8() unsafe.Pointer  { return C.cgo_test_ptr_8() }
-func testCallPtr9() unsafe.Pointer  { return C.cgo_test_ptr_9() }
-func testCallPtr10() unsafe.Pointer { return C.cgo_test_ptr_10() }
-func testCallPtr11() unsafe.Pointer { return C.cgo_test_ptr_11() }
-func testCallPtr12() unsafe.Pointer { return C.cgo_test_ptr_12() }
-func testCallPtr13() unsafe.Pointer { return C.cgo_test_ptr_13() }
-func testCallPtr14() unsafe.Pointer { return C.cgo_test_ptr_14() }
-func testCallPtr15() unsafe.Pointer { return C.cgo_test_ptr_15() }
-func testCallPtr16() unsafe.Pointer { return C.cgo_test_ptr_16() }
-func testCallPtr17() unsafe.Pointer { return C.cgo_test_ptr_17() }
+func testCallPtr2() unsafe.Pointer {
+	return C.cgo_test_ptr_2()
+}
+
 func testCallPtr18() unsafe.Pointer {
 	return C.cgo_test_ptr_18()
 }
@@ -192,18 +165,6 @@ func testWithErrno(rc C.int) (int, error) {
 	})
 }
 
-func testCallUintptr(value C.uintptr_t) error {
-	return Call(testCallPtr1(), value)
-}
-
-func testCallSizeT(value C.size_t) error {
-	return Call(testCallPtr1(), value)
-}
-
-func testCallCInt(value C.int) error {
-	return Call(testCallPtr1(), value)
-}
-
-func testMalloc(size C.size_t) unsafe.Pointer {
-	return C.malloc(size)
+func testMalloc(size uintptr) unsafe.Pointer {
+	return C.malloc(C.size_t(size))
 }
