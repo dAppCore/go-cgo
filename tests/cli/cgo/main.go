@@ -26,40 +26,37 @@ static void* ax10_copy_ptr(void) { return (void*)ax10_copy; }
 import "C"
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
-	"os"
 	"syscall"
 	"unsafe"
 
+	core "dappco.re/go"
 	corecgo "dappco.re/go/cgo"
 )
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		core.Print(core.Stderr(), "%v", err)
+		core.Exit(1)
 	}
 }
 
 func run() error {
 	if err := corecgo.Call(C.ax10_noop_ptr()); err != nil {
-		return fmt.Errorf("call noop: %w", err)
+		return core.Errorf("call noop: %w", err)
 	}
 
 	var sum uintptr
 	if err := corecgo.Call(C.ax10_sum_ptr(), 2, corecgo.SizeT(3), unsafe.Pointer(&sum)); err != nil {
-		return fmt.Errorf("call sum: %w", err)
+		return core.Errorf("call sum: %w", err)
 	}
 	if sum != 5 {
-		return fmt.Errorf("call sum = %d, want 5", sum)
+		return core.Errorf("call sum = %d, want 5", sum)
 	}
 
 	cString := corecgo.CString("ax-10")
 	defer corecgo.Free(unsafe.Pointer(cString))
 	if got := corecgo.GoString(cString); got != "ax-10" {
-		return fmt.Errorf("go string = %q, want %q", got, "ax-10")
+		return core.Errorf("go string = %q, want %q", got, "ax-10")
 	}
 
 	scope := corecgo.NewScope()
@@ -67,22 +64,22 @@ func run() error {
 	output := scope.Buffer(5)
 
 	if copied := input.CopyFrom([]byte("cgo!!")); copied != input.Len() {
-		return fmt.Errorf("buffer copy copied %d bytes, want %d", copied, input.Len())
+		return core.Errorf("buffer copy copied %d bytes, want %d", copied, input.Len())
 	}
 	if err := corecgo.Call(C.ax10_copy_ptr(), input, output, corecgo.SizeT(input.Len())); err != nil {
-		return fmt.Errorf("call copy: %w", err)
+		return core.Errorf("call copy: %w", err)
 	}
-	if !bytes.Equal(output.Bytes(), []byte("cgo!!")) {
-		return fmt.Errorf("copied buffer = %q, want %q", output.Bytes(), "cgo!!")
+	if string(output.Bytes()) != "cgo!!" {
+		return core.Errorf("copied buffer = %q, want %q", output.Bytes(), "cgo!!")
 	}
 
 	scope.FreeAll()
 	if !scope.IsFreed() {
-		return errors.New("scope is not marked freed")
+		return core.NewError("scope is not marked freed")
 	}
 
-	if err := corecgo.Errno(corecgo.Int(int(syscall.EINVAL))); !errors.Is(err, syscall.EINVAL) {
-		return fmt.Errorf("errno = %v, want %v", err, syscall.EINVAL)
+	if err := corecgo.Errno(corecgo.Int(int(syscall.EINVAL))); !core.Is(err, syscall.EINVAL) {
+		return core.Errorf("errno = %v, want %v", err, syscall.EINVAL)
 	}
 
 	return nil

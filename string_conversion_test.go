@@ -80,6 +80,26 @@ func TestStringConversion_Errno_Ugly(t *T) {
 	AssertNotEqual(t, "", err.Error())
 }
 
+func TestStringConversion_WithErrno_Good(t *T) {
+	rc, err := WithErrno(func() testCInt { return 0 })
+
+	AssertNoError(t, err)
+	AssertEqual(t, 0, rc)
+}
+
+func TestStringConversion_WithErrno_Bad(t *T) {
+	AssertPanics(t, func() {
+		_, _ = WithErrno(nil)
+	})
+}
+
+func TestStringConversion_WithErrno_Ugly(t *T) {
+	rc, err := WithErrno(func() testCInt { return 2 })
+
+	AssertEqual(t, 2, rc)
+	AssertErrorIs(t, err, syscall.Errno(2))
+}
+
 func TestStringConversion_GoString_Good(t *T) {
 	ptr := CString("hello")
 	defer Free(unsafe.Pointer(ptr))

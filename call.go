@@ -83,10 +83,11 @@ static inline int cgo_call_18(void *fn, uintptr_t a1, uintptr_t a2, uintptr_t a3
 import "C"
 
 import (
-	"fmt"
 	"reflect"
 	"runtime"
 	"unsafe"
+
+	core "dappco.re/go"
 )
 
 // Call invokes a C function pointer and maps a non-zero return code to an error.
@@ -97,7 +98,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 		panic("cgo.Call: function pointer is nil")
 	}
 	if len(args) > 18 {
-		panic(fmt.Sprintf("cgo.Call: unsupported arity: %d", len(args)))
+		panic(core.Sprintf("cgo.Call: unsupported arity: %d", len(args)))
 	}
 
 	encoded := make([]uintptr, len(args))
@@ -155,7 +156,7 @@ func Call(function unsafe.Pointer, args ...interface{}) error {
 
 func encodeCallArg(position int, arg interface{}) uintptr {
 	if arg == nil {
-		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
+		panic(core.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
 	}
 
 	switch v := arg.(type) {
@@ -198,6 +199,6 @@ func encodeCallArg(position int, arg interface{}) uintptr {
 		if reflect.TypeOf(arg).Kind() == reflect.Uintptr {
 			return uintptr(reflect.ValueOf(arg).Uint())
 		}
-		panic(fmt.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
+		panic(core.Sprintf("cgo.Call: unsupported argument type at argument %d", position))
 	}
 }

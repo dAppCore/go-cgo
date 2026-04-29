@@ -131,6 +131,8 @@ import "C"
 
 import "unsafe"
 
+type testCInt = C.int
+
 func testCallReset() {
 	C.cgo_test_reset()
 }
