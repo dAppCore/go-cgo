@@ -90,10 +90,11 @@ import (
 	core "dappco.re/go"
 )
 
-// Call invokes a C function pointer and maps a non-zero return code to an error.
+// Call invokes a C function pointer and maps a non-zero return code to a Core
+// Result.
 //
-//	err := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(payload)))
-func Call(function unsafe.Pointer, args ...interface{}) error {
+//	r := Call(unsafe.Pointer(C.some_function), buffer.Ptr(), SizeT(len(payload)))
+func Call(function unsafe.Pointer, args ...interface{}) core.Result {
 	if function == nil {
 		panic("cgo.Call: function pointer is nil")
 	}

@@ -6,13 +6,12 @@ package cgo
 import "C"
 
 import (
-	"io"
 	"runtime"
 	"sync/atomic"
 	"unsafe"
-)
 
-var _ io.Closer = (*Buffer)(nil)
+	core "dappco.re/go"
+)
 
 // Buffer owns byte memory that can be passed safely to C.
 //
@@ -69,13 +68,13 @@ func (b *Buffer) Free() {
 	b.free(false)
 }
 
-// Close releases the buffer and implements io.Closer.
+// Close releases the buffer and reports cleanup through a Core Result.
 //
 //	buffer := NewBuffer(16)
 //	defer buffer.Close()
-func (b *Buffer) Close() error {
+func (b *Buffer) Close() core.Result {
 	b.Free()
-	return nil
+	return core.Ok(nil)
 }
 
 // CopyFrom copies bytes from src into the buffer and returns bytes copied.

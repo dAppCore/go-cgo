@@ -119,16 +119,17 @@ func TestScope_Scope_FreeAll_Ugly(t *T) {
 func TestScope_Scope_Close_Good(t *T) {
 	scope := NewScope()
 	buffer := scope.Buffer(1)
-	err := scope.Close()
+	r := scope.Close()
 
-	AssertNoError(t, err)
+	AssertTrue(t, r.OK)
+	AssertNil(t, r.Value)
 	AssertTrue(t, scope.IsFreed())
 	AssertTrue(t, buffer.IsFreed())
 }
 
 func TestScope_Scope_Close_Bad(t *T) {
 	scope := NewScope()
-	RequireNoError(t, scope.Close())
+	AssertTrue(t, scope.Close().OK)
 
 	AssertPanicsWithError(t, "double-free detected", func() {
 		_ = scope.Close()
@@ -138,9 +139,10 @@ func TestScope_Scope_Close_Bad(t *T) {
 
 func TestScope_Scope_Close_Ugly(t *T) {
 	var scope *Scope
-	err := scope.Close()
+	r := scope.Close()
 
-	AssertNoError(t, err)
+	AssertTrue(t, r.OK)
+	AssertNil(t, r.Value)
 	AssertTrue(t, scope.IsFreed())
 }
 

@@ -13,7 +13,7 @@ The package focuses on four jobs:
 - `CString`, `GoString`, `SizeT`, `Int`, `Errno`, and `WithErrno` make common C
   boundary conversions explicit.
 - `Call` invokes C function pointers with up to 18 pointer-sized arguments and
-  maps non-zero return codes into Go errors.
+  maps non-zero return codes into failed Core `Result`s.
 
 ## Install
 

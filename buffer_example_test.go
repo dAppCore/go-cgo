@@ -41,13 +41,13 @@ func ExampleBuffer_Free() {
 	// Output: true
 }
 
-// ExampleBuffer_Close lets Buffer satisfy io.Closer-style cleanup paths while
-// preserving the same ownership semantics as Free.
+// ExampleBuffer_Close exposes Result-shaped cleanup while preserving the same
+// ownership semantics as Free.
 func ExampleBuffer_Close() {
 	buffer := cgo.NewBuffer(1)
-	err := buffer.Close()
+	r := buffer.Close()
 
-	Println(err == nil)
+	Println(r.OK)
 	Println(buffer.IsFreed())
 	// Output:
 	// true

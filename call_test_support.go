@@ -129,7 +129,11 @@ static void* cgo_test_ptr_18(void) { return (void*)cgo_test_fn_18; }
 */
 import "C"
 
-import "unsafe"
+import (
+	"unsafe"
+
+	core "dappco.re/go"
+)
 
 type testCInt = C.int
 
@@ -161,7 +165,7 @@ func testCallSum() uintptr {
 	return uintptr(C.cgo_test_sum_value())
 }
 
-func testWithErrno(rc C.int) (int, error) {
+func testWithErrno(rc C.int) core.Result {
 	return WithErrno(func() C.int {
 		return rc
 	})

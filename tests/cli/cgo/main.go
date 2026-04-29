@@ -34,29 +34,29 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		core.Print(core.Stderr(), "%v", err)
+	if r := run(); !r.OK {
+		core.Print(core.Stderr(), "%s", r.Error())
 		core.Exit(1)
 	}
 }
 
-func run() error {
-	if err := corecgo.Call(C.ax10_noop_ptr()); err != nil {
-		return core.Errorf("call noop: %w", err)
+func run() core.Result {
+	if r := corecgo.Call(C.ax10_noop_ptr()); !r.OK {
+		return core.Fail(core.Errorf("call noop: %w", r.Value.(error)))
 	}
 
 	var sum uintptr
-	if err := corecgo.Call(C.ax10_sum_ptr(), 2, corecgo.SizeT(3), unsafe.Pointer(&sum)); err != nil {
-		return core.Errorf("call sum: %w", err)
+	if r := corecgo.Call(C.ax10_sum_ptr(), 2, corecgo.SizeT(3), unsafe.Pointer(&sum)); !r.OK {
+		return core.Fail(core.Errorf("call sum: %w", r.Value.(error)))
 	}
 	if sum != 5 {
-		return core.Errorf("call sum = %d, want 5", sum)
+		return core.Fail(core.Errorf("call sum = %d, want 5", sum))
 	}
 
 	cString := corecgo.CString("ax-10")
 	defer corecgo.Free(unsafe.Pointer(cString))
 	if got := corecgo.GoString(cString); got != "ax-10" {
-		return core.Errorf("go string = %q, want %q", got, "ax-10")
+		return core.Fail(core.Errorf("go string = %q, want %q", got, "ax-10"))
 	}
 
 	scope := corecgo.NewScope()
@@ -64,23 +64,24 @@ func run() error {
 	output := scope.Buffer(5)
 
 	if copied := input.CopyFrom([]byte("cgo!!")); copied != input.Len() {
-		return core.Errorf("buffer copy copied %d bytes, want %d", copied, input.Len())
+		return core.Fail(core.Errorf("buffer copy copied %d bytes, want %d", copied, input.Len()))
 	}
-	if err := corecgo.Call(C.ax10_copy_ptr(), input, output, corecgo.SizeT(input.Len())); err != nil {
-		return core.Errorf("call copy: %w", err)
+	if r := corecgo.Call(C.ax10_copy_ptr(), input, output, corecgo.SizeT(input.Len())); !r.OK {
+		return core.Fail(core.Errorf("call copy: %w", r.Value.(error)))
 	}
 	if string(output.Bytes()) != "cgo!!" {
-		return core.Errorf("copied buffer = %q, want %q", output.Bytes(), "cgo!!")
+		return core.Fail(core.Errorf("copied buffer = %q, want %q", output.Bytes(), "cgo!!"))
 	}
 
 	scope.FreeAll()
 	if !scope.IsFreed() {
-		return core.NewError("scope is not marked freed")
+		return core.Fail(core.NewError("scope is not marked freed"))
 	}
 
-	if err := corecgo.Errno(corecgo.Int(int(syscall.EINVAL))); !core.Is(err, syscall.EINVAL) {
-		return core.Errorf("errno = %v, want %v", err, syscall.EINVAL)
+	errno := corecgo.Errno(corecgo.Int(int(syscall.EINVAL)))
+	if errno.OK || !core.Is(errno.Value.(error), syscall.EINVAL) {
+		return core.Fail(core.Errorf("errno = %v, want %v", errno.Value, syscall.EINVAL))
 	}
 
-	return nil
+	return core.Ok(nil)
 }

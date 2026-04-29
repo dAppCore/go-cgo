@@ -62,15 +62,16 @@ func TestBuffer_Buffer_Free_Ugly(t *T) {
 
 func TestBuffer_Buffer_Close_Good(t *T) {
 	buffer := NewBuffer(1)
-	err := buffer.Close()
+	r := buffer.Close()
 
-	AssertNoError(t, err)
+	AssertTrue(t, r.OK)
+	AssertNil(t, r.Value)
 	AssertTrue(t, buffer.IsFreed())
 }
 
 func TestBuffer_Buffer_Close_Bad(t *T) {
 	buffer := NewBuffer(1)
-	RequireNoError(t, buffer.Close())
+	AssertTrue(t, buffer.Close().OK)
 
 	AssertPanicsWithError(t, "double-free detected", func() {
 		_ = buffer.Close()
@@ -80,9 +81,10 @@ func TestBuffer_Buffer_Close_Bad(t *T) {
 
 func TestBuffer_Buffer_Close_Ugly(t *T) {
 	var buffer *Buffer
-	err := buffer.Close()
+	r := buffer.Close()
 
-	AssertNoError(t, err)
+	AssertTrue(t, r.OK)
+	AssertNil(t, r.Value)
 	AssertTrue(t, buffer.IsFreed())
 }
 

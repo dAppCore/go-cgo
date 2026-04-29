@@ -60,44 +60,46 @@ func TestStringConversion_Int_Ugly(t *T) {
 }
 
 func TestStringConversion_Errno_Good(t *T) {
-	err := Errno(0)
+	r := Errno(0)
 
-	AssertNoError(t, err)
-	AssertNil(t, err)
+	AssertTrue(t, r.OK)
+	AssertEqual(t, 0, r.Value)
 }
 
 func TestStringConversion_Errno_Bad(t *T) {
-	err := Errno(5)
+	r := Errno(5)
 
-	AssertError(t, err)
-	AssertErrorIs(t, err, syscall.Errno(5))
+	AssertFalse(t, r.OK)
+	AssertError(t, r.Value.(error))
+	AssertErrorIs(t, r.Value.(error), syscall.Errno(5))
 }
 
 func TestStringConversion_Errno_Ugly(t *T) {
-	err := Errno(-1)
+	r := Errno(-1)
 
-	AssertError(t, err)
-	AssertNotEqual(t, "", err.Error())
+	AssertFalse(t, r.OK)
+	AssertError(t, r.Value.(error))
+	AssertNotEqual(t, "", r.Value.(error).Error())
 }
 
 func TestStringConversion_WithErrno_Good(t *T) {
-	rc, err := WithErrno(func() testCInt { return 0 })
+	r := WithErrno(func() testCInt { return 0 })
 
-	AssertNoError(t, err)
-	AssertEqual(t, 0, rc)
+	AssertTrue(t, r.OK)
+	AssertEqual(t, 0, r.Value)
 }
 
 func TestStringConversion_WithErrno_Bad(t *T) {
-	AssertPanics(t, func() {
-		_, _ = WithErrno(nil)
+	AssertPanicsWithError(t, "function is nil", func() {
+		_ = WithErrno(nil)
 	})
 }
 
 func TestStringConversion_WithErrno_Ugly(t *T) {
-	rc, err := WithErrno(func() testCInt { return 2 })
+	r := WithErrno(func() testCInt { return 2 })
 
-	AssertEqual(t, 2, rc)
-	AssertErrorIs(t, err, syscall.Errno(2))
+	AssertFalse(t, r.OK)
+	AssertErrorIs(t, r.Value.(error), syscall.Errno(2))
 }
 
 func TestStringConversion_GoString_Good(t *T) {

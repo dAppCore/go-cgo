@@ -10,8 +10,8 @@ ownership rules, and compliance enforced by the v0.9.0 audit script.
 - `buffer.go` defines `Buffer`, a C-backed byte allocation with `Free`,
   `Close`, `CopyFrom`, `Bytes`, `Ptr`, `Len`, and `IsFreed`.
 - `scope.go` defines `Scope`, a grouped owner for temporary buffers and C
-  strings. `FreeAll` is the canonical cleanup path and `Close` adapts it to
-  `io.Closer`.
+  strings. `FreeAll` is the canonical cleanup path and `Close` reports cleanup
+  through a Core `Result`.
 - `string_conversion.go` contains C boundary conversions: `SizeT`, `Int`,
   `Errno`, `WithErrno`, `GoString`, `CString`, and `Free`.
 - `call.go` contains the function-pointer dispatcher. It accepts pointer-sized

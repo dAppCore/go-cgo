@@ -28,14 +28,15 @@ normal use.
 as empty strings, which gives callers a simple safe default for optional C
 returns.
 
-`Errno` and `WithErrno` adapt C's integer return convention to Go's `error`
-flow. Zero means success; non-zero values become `syscall.Errno`.
+`Errno` and `WithErrno` adapt C's integer return convention to Core's `Result`
+flow. Zero means success; non-zero values become failed Results carrying
+`syscall.Errno`.
 
 ## Function Pointer Calls
 
 `Call` is the dispatcher for C function pointers. It accepts up to 18
 pointer-sized arguments, converts supported Go values into `uintptr`, invokes a
-small C shim for the matching arity, and returns `Errno(rc)`.
+small C shim for the matching arity, and returns the `Errno(rc)` Result.
 
 Supported argument shapes include raw pointers, byte slices, `*Buffer`, C
 strings, integer widths, and uintptr-like values. Unsupported types and nil

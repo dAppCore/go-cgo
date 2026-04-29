@@ -68,14 +68,14 @@ func ExampleScope_FreeAll() {
 	// true
 }
 
-// ExampleScope_Close uses the io.Closer-compatible cleanup hook for callers
-// that collect resources behind a common interface.
+// ExampleScope_Close uses the Result-shaped cleanup hook for callers that
+// collect resources behind a common lifecycle.
 func ExampleScope_Close() {
 	scope := cgo.NewScope()
 	buffer := scope.Buffer(1)
 
-	err := scope.Close()
-	Println(err == nil)
+	r := scope.Close()
+	Println(r.OK)
 	Println(buffer.IsFreed())
 	// Output:
 	// true

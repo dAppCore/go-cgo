@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"unsafe"
+
+	core "dappco.re/go"
 )
 
 type cStringAllocation struct {
@@ -72,25 +74,33 @@ func Int(value int) C.int {
 	return C.int(value)
 }
 
-// Errno converts a C errno value to a Go error.
+// Errno converts a C errno value to a Core Result.
 //
 //	rc := C.some_function()
-//	err := Errno(rc)
-func Errno(rc C.int) error {
+//	r := Errno(rc)
+func Errno(rc C.int) core.Result {
 	if rc == 0 {
-		return nil
+		return core.Ok(int(rc))
 	}
-	return syscall.Errno(rc)
+	return core.Fail(syscall.Errno(rc))
 }
 
-// WithErrno calls a C function and returns the errno as a Go error.
+// WithErrno calls a C function and returns the errno as a Core Result.
 //
-//	result, err := WithErrno(func() C.int {
+//	r := WithErrno(func() C.int {
 //	    return C.my_function(args...)
 //	})
-func WithErrno(fn func() C.int) (int, error) {
+func WithErrno(fn func() C.int) core.Result {
+	if fn == nil {
+		panic("cgo.WithErrno: function is nil")
+	}
+
 	rc := fn()
-	return int(rc), Errno(rc)
+	r := Errno(rc)
+	if !r.OK {
+		return r
+	}
+	return core.Ok(int(rc))
 }
 
 // GoString converts a C string to Go string safely.

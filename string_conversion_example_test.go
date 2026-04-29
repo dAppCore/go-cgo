@@ -25,18 +25,18 @@ func ExampleInt() {
 }
 
 // ExampleErrno maps the C convention of zero success and non-zero errno values
-// into Go's error flow.
+// into Core's Result flow.
 func ExampleErrno() {
-	Println(cgo.Errno(cgo.Int(0)) == nil)
-	Println(cgo.Errno(cgo.Int(2)) != nil)
+	Println(cgo.Errno(cgo.Int(0)).OK)
+	Println(cgo.Errno(cgo.Int(2)).OK)
 	// Output:
 	// true
-	// true
+	// false
 }
 
-// ExampleWithErrno wraps a C-style integer return function and exposes both the
-// raw return code and the Go error value. Reflection keeps this external
-// example runnable without importing C from a test file.
+// ExampleWithErrno wraps a C-style integer return function and exposes the raw
+// return code through a Result. Reflection keeps this external example runnable
+// without importing C from a test file.
 func ExampleWithErrno() {
 	fnType := reflect.TypeOf(cgo.WithErrno).In(0)
 	fn := reflect.MakeFunc(fnType, func(_ []reflect.Value) []reflect.Value {
@@ -44,11 +44,12 @@ func ExampleWithErrno() {
 	})
 
 	out := reflect.ValueOf(cgo.WithErrno).Call([]reflect.Value{fn})
-	Println(out[0].Interface())
-	Println(out[1].IsNil())
+	r := out[0].Interface().(Result)
+	Println(r.OK)
+	Println(r.Value)
 	// Output:
-	// 0
 	// true
+	// 0
 }
 
 // ExampleGoString converts a NUL-terminated C string pointer into a Go string.

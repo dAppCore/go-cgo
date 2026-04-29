@@ -6,14 +6,13 @@ package cgo
 import "C"
 
 import (
-	"io"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
-)
 
-var _ io.Closer = (*Scope)(nil)
+	core "dappco.re/go"
+)
 
 // Scope tracks multiple C allocations and releases them together.
 //
@@ -88,13 +87,14 @@ func (s *Scope) FreeAll() {
 	s.freeAll(false)
 }
 
-// Close releases every allocation in the scope and implements io.Closer.
+// Close releases every allocation in the scope and reports cleanup through a
+// Core Result.
 //
 //	scope := NewScope()
 //	defer scope.Close()
-func (s *Scope) Close() error {
+func (s *Scope) Close() core.Result {
 	s.FreeAll()
-	return nil
+	return core.Ok(nil)
 }
 
 // IsFreed reports whether FreeAll has been called.
