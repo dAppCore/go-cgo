@@ -1,5 +1,10 @@
 package cgo
 
+const (
+	doubleFreeMessage   = "double-free detected"
+	useAfterFreeMessage = "use-after-free detected"
+)
+
 func TestBuffer_NewBuffer_Good(t *T) {
 	buffer := NewBuffer(8)
 	defer buffer.Free()
@@ -35,7 +40,7 @@ func TestBuffer_Buffer_Free_Good(t *T) {
 	buffer.Free()
 
 	AssertTrue(t, buffer.IsFreed())
-	AssertPanicsWithError(t, "double-free detected", func() {
+	AssertPanicsWithError(t, doubleFreeMessage, func() {
 		buffer.Free()
 	})
 }
@@ -44,7 +49,7 @@ func TestBuffer_Buffer_Free_Bad(t *T) {
 	buffer := NewBuffer(4)
 	buffer.Free()
 
-	AssertPanicsWithError(t, "double-free detected", func() {
+	AssertPanicsWithError(t, doubleFreeMessage, func() {
 		buffer.Free()
 	})
 	AssertTrue(t, buffer.IsFreed())
@@ -73,7 +78,7 @@ func TestBuffer_Buffer_Close_Bad(t *T) {
 	buffer := NewBuffer(1)
 	AssertTrue(t, buffer.Close().OK)
 
-	AssertPanicsWithError(t, "double-free detected", func() {
+	AssertPanicsWithError(t, doubleFreeMessage, func() {
 		_ = buffer.Close()
 	})
 	AssertTrue(t, buffer.IsFreed())
@@ -101,7 +106,7 @@ func TestBuffer_Buffer_CopyFrom_Bad(t *T) {
 	buffer := NewBuffer(1)
 	buffer.Free()
 
-	AssertPanicsWithError(t, "use-after-free detected", func() {
+	AssertPanicsWithError(t, useAfterFreeMessage, func() {
 		_ = buffer.CopyFrom([]byte("x"))
 	})
 	AssertTrue(t, buffer.IsFreed())
@@ -130,7 +135,7 @@ func TestBuffer_Buffer_Bytes_Bad(t *T) {
 	buffer := NewBuffer(2)
 	buffer.Free()
 
-	AssertPanicsWithError(t, "use-after-free detected", func() {
+	AssertPanicsWithError(t, useAfterFreeMessage, func() {
 		_ = buffer.Bytes()
 	})
 	AssertTrue(t, buffer.IsFreed())
@@ -158,7 +163,7 @@ func TestBuffer_Buffer_Ptr_Bad(t *T) {
 	buffer := NewBuffer(2)
 	buffer.Free()
 
-	AssertPanicsWithError(t, "use-after-free detected", func() {
+	AssertPanicsWithError(t, useAfterFreeMessage, func() {
 		_ = buffer.Ptr()
 	})
 	AssertTrue(t, buffer.IsFreed())
@@ -185,7 +190,7 @@ func TestBuffer_Buffer_Len_Bad(t *T) {
 	buffer := NewBuffer(1)
 	buffer.Free()
 
-	AssertPanicsWithError(t, "use-after-free detected", func() {
+	AssertPanicsWithError(t, useAfterFreeMessage, func() {
 		_ = buffer.Len()
 	})
 	AssertTrue(t, buffer.IsFreed())

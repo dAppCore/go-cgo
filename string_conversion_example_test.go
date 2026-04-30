@@ -66,8 +66,11 @@ func ExampleCString() {
 	cString := cgo.CString("hello")
 	defer cgo.Free(unsafe.Pointer(cString))
 
+	Println(cString != nil)
 	Println(cgo.GoString(cString))
-	// Output: hello
+	// Output:
+	// true
+	// hello
 }
 
 // ExampleFree releases memory allocated by CString and tolerates a repeated
