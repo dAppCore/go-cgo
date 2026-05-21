@@ -37,6 +37,27 @@ func AdoptCString(cStr unsafe.Pointer) string {
 	return s
 }
 
+// CStringPtr converts a Go string to a C-allocated null-terminated
+// buffer and returns its address as unsafe.Pointer — the cross-
+// package transport. Symmetric to AdoptCString for the Go→C
+// direction. Caller must free via cgo.Free or C.free directly.
+//
+//	cPath := cgo.CStringPtr(path)
+//	defer cgo.Free(cPath)
+//	C.mlx_func((*C.char)(cPath), ...)
+//
+// Replaces the local-cgo idiom:
+//
+//	cPath := C.CString(path)
+//	defer C.free(unsafe.Pointer(cPath))
+//
+// Both shapes work; CStringPtr names the substrate ownership and
+// gives cgo.Free a chance to track double-free per the package's
+// existing safety contract.
+func CStringPtr(s string) unsafe.Pointer {
+	return unsafe.Pointer(CString(s))
+}
+
 // AdoptCStringN copies n bytes from a C-allocated buffer into a Go
 // string and frees the C side. Use when the C buffer is not null-
 // terminated (mlx_string_data when a length is known up front,
