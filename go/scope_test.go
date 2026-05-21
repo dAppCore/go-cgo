@@ -170,3 +170,52 @@ func TestScope_Scope_IsFreed_Ugly(t *T) {
 		scope.FreeAll()
 	})
 }
+
+func TestScope_PinIn_Good(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	slice := []int32{1, 2, 3, 4}
+	view := PinIn(scope, slice)
+
+	AssertNotNil(t, view)
+	AssertTrue(t, view.Active())
+	AssertEqual(t, 4, view.Len())
+	AssertEqual(t, 16, view.Bytes())
+}
+
+func TestScope_PinIn_EmptySlice(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	var slice []int32
+	view := PinIn(scope, slice)
+
+	AssertNotNil(t, view)
+	AssertFalse(t, view.Active())
+}
+
+func TestScope_PinIn_ReleasedOnFreeAll(t *T) {
+	scope := NewScope()
+	slice := []float32{1, 2, 3, 4}
+	view := PinIn(scope, slice)
+
+	AssertTrue(t, view.Active())
+	scope.FreeAll()
+	AssertFalse(t, view.Active())
+}
+
+func TestScope_PinIn_NilScope_Panics(t *T) {
+	AssertPanicsWithError(t, "scope is nil", func() {
+		PinIn[int32](nil, []int32{1, 2})
+	})
+}
+
+func TestScope_PinIn_FreedScope_Panics(t *T) {
+	scope := NewScope()
+	scope.FreeAll()
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		PinIn(scope, []int32{1, 2})
+	})
+}

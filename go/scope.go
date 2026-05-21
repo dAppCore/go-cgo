@@ -24,6 +24,7 @@ type Scope struct {
 	lock    sync.Mutex
 	buffers []*Buffer
 	strings []unsafe.Pointer
+	pins    []*core.PinnedView
 	freed   atomic.Bool
 }
 
@@ -125,8 +126,10 @@ func (s *Scope) freeAll(noPanic bool) bool {
 	s.lock.Lock()
 	buffers := s.buffers
 	strings := s.strings
+	pins := s.pins
 	s.buffers = nil
 	s.strings = nil
+	s.pins = nil
 	s.lock.Unlock()
 
 	for _, buffer := range buffers {
@@ -138,5 +141,41 @@ func (s *Scope) freeAll(noPanic bool) bool {
 	for _, pointer := range strings {
 		Free(pointer)
 	}
+
+	for _, pin := range pins {
+		pin.Release()
+	}
 	return true
+}
+
+// PinIn pins slice's backing array under scope's lifetime — the pin
+// is released when scope.FreeAll runs. The returned *core.PinnedView
+// can be passed to C via Ptr()/Len()/Bytes() and remains valid until
+// FreeAll. Use this for slices C may retain across more than one
+// cgo invocation (async kernels, mlx_array data slots, weight
+// tensors) that the surrounding scope already manages.
+//
+//	scope := cgo.NewScope()
+//	defer scope.FreeAll()
+//	weights := cgo.PinIn(scope, modelWeights)
+//	C.kernel_load(weights.Ptr(), C.size_t(weights.Bytes()))
+//
+// For one-shot calls where C consumes the pointer during the call,
+// pass &slice[0] directly — the cgo runtime already prevents GC
+// movement for the call's duration without a pin.
+func PinIn[T any](scope *Scope, slice []T) *core.PinnedView {
+	if scope == nil {
+		panic("cgo.PinIn: scope is nil")
+	}
+	scope.lock.Lock()
+	defer scope.lock.Unlock()
+	if scope.freed.Load() {
+		panic("cgo.PinIn: scope is already freed")
+	}
+	view := &core.PinnedView{}
+	core.PinSlice(slice, view)
+	if view.Active() {
+		scope.pins = append(scope.pins, view)
+	}
+	return view
 }
