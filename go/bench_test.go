@@ -145,3 +145,59 @@ func BenchmarkErrno(b *testing.B) {
 		_ = Errno(0)
 	}
 }
+
+// BenchmarkScope_PinIn measures the scope-managed slice-pinning shape used
+// for weight tensors / kernel buffers C may retain across cgo invocations.
+func BenchmarkScope_PinIn(b *testing.B) {
+	slice := make([]float32, 64)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s := NewScope()
+		_ = PinIn(s, slice)
+		s.FreeAll()
+	}
+}
+
+// BenchmarkSizeT exercises the integer-bounds-checked C.size_t conversion.
+func BenchmarkSizeT(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = SizeT(1024)
+	}
+}
+
+// BenchmarkCStringPtr round-trips a Go string through CStringPtr+Free —
+// the cross-package CString variant returning unsafe.Pointer directly.
+func BenchmarkCStringPtr_Free(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		p := CStringPtr("hello world")
+		Free(p)
+	}
+}
+
+// BenchmarkScope_MultiBuffer measures the typical "kernel takes several
+// buffers" shape — scope allocates 4 buffers and frees together.
+func BenchmarkScope_MultiBuffer(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s := NewScope()
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		s.FreeAll()
+	}
+}
+
+// BenchmarkBuffer_Ptr measures the accessor cost on the hot kernel
+// argument-encoding loop path.
+func BenchmarkBuffer_Ptr(b *testing.B) {
+	buf := NewBuffer(64)
+	defer buf.Free()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = buf.Ptr()
+	}
+}
