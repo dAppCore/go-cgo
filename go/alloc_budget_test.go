@@ -203,3 +203,16 @@ func TestAllocBudget_Errno(t *testing.T) {
 		_ = Errno(0)
 	})
 }
+
+// TestAllocBudget_WithErrno locks the lambda-wrapped C-call shape at
+// zero allocs on the success path. The fn-as-closure must not escape;
+// inlining + escape analysis turn the call site into a direct dispatch.
+//
+// Baseline: 0 allocs (closure stays on the stack, success Result is
+// value-stack only). Ceiling = 0 to catch any future edit that lets
+// the closure escape to the heap on the hot kernel-invoke path.
+func TestAllocBudget_WithErrno(t *testing.T) {
+	allocBudget(t, "WithErrno", 0, func() {
+		_ = WithErrno(func() testCInt { return 0 })
+	})
+}
