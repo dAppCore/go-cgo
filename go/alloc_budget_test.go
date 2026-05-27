@@ -178,3 +178,15 @@ func TestAllocBudget_Buffer_Ptr(t *testing.T) {
 		_ = buf.Ptr()
 	})
 }
+
+// TestAllocBudget_SizeT locks the bounds-checked Go int → C.size_t
+// conversion at zero allocs. The non-overflowing path is a constant
+// switch + cast; only the panic branches would allocate, and those
+// are not on the hot path.
+//
+// Baseline: 0 allocs. Ceiling = 0.
+func TestAllocBudget_SizeT(t *testing.T) {
+	allocBudget(t, "SizeT", 0, func() {
+		_ = SizeT(1024)
+	})
+}
