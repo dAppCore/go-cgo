@@ -156,10 +156,13 @@ func Free(ptr unsafe.Pointer) {
 		return
 	}
 
+	// LoadOrStore both checks for prior free and records this free in one
+	// op. When loaded=true the pointer was already freed via this code
+	// path (idempotency contract). When loaded=false the value is already
+	// recorded — no follow-up Store needed.
 	if _, loaded := freedPointers.LoadOrStore(addr, struct{}{}); loaded {
 		return
 	}
 
 	C.free(ptr)
-	freedPointers.Store(addr, struct{}{})
 }

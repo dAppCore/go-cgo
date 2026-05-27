@@ -85,6 +85,18 @@ func TestAllocBudget_NewBufferUnmanaged(t *testing.T) {
 	})
 }
 
+// TestAllocBudget_Free_Raw locks the dedup win on Free's raw-pointer path.
+// Pre-fix: 2 allocs (LoadOrStore + redundant Store in freedPointers).
+// Post-fix: 1 alloc (LoadOrStore alone — Store was a no-op re-write).
+//
+// Ceiling = 1 to detect resurrection of the redundant Store call.
+func TestAllocBudget_Free_Raw(t *testing.T) {
+	allocBudget(t, "Free (raw pointer)", 1, func() {
+		ptr := testMalloc(64)
+		Free(ptr)
+	})
+}
+
 // TestAllocBudget_Scope_Buffer locks the SBO win on Scope.Buffer.
 // Pre-SBO: 3 allocs (Scope + Buffer + first append into nil slice).
 // Post-SBO: 2 allocs (Scope + Buffer; append fits in inline array).
