@@ -232,3 +232,20 @@ func TestAllocBudget_Scope_CString(t *testing.T) {
 		s.FreeAll()
 	})
 }
+
+// TestAllocBudget_PinIn locks the scope-managed slice-pin hot path at
+// its measured baseline — the shape every weight-tensor / async-kernel
+// handoff hits. Allocates the *Scope struct + the *PinnedView; the
+// pins inline-array SBO absorbs the first append at no extra alloc.
+//
+// Baseline: 2 allocs (1 *Scope + 1 *core.PinnedView). Ceiling = 2 to
+// detect regression in the SBO path or any new bookkeeping inside
+// core.PinSlice / scope.pins capture.
+func TestAllocBudget_PinIn(t *testing.T) {
+	slice := make([]float32, 64)
+	allocBudget(t, "PinIn", 2, func() {
+		s := NewScope()
+		_ = PinIn(s, slice)
+		s.FreeAll()
+	})
+}
