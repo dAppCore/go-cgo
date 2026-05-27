@@ -190,3 +190,16 @@ func TestAllocBudget_SizeT(t *testing.T) {
 		_ = SizeT(1024)
 	})
 }
+
+// TestAllocBudget_Errno locks the bare rc → Result mapping at zero
+// allocs on the success path (rc == 0). Errno is the floor underneath
+// WithErrno and is hit on every cgo return-code translation.
+//
+// Baseline: 0 allocs (core.Ok of an int is value-stack only). Ceiling
+// = 0 to catch any future edit that boxes the int into an interface
+// on the hot success path.
+func TestAllocBudget_Errno(t *testing.T) {
+	allocBudget(t, "Errno", 0, func() {
+		_ = Errno(0)
+	})
+}
