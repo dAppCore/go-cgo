@@ -119,3 +119,17 @@ func TestAllocBudget_Scope_Empty(t *testing.T) {
 		s.FreeAll()
 	})
 }
+
+// TestAllocBudget_AdoptCString locks the C→Go error-message transport at
+// its measured baseline. AdoptCString allocates the Go string (1) + reuses
+// the CString tracker entries on Free (5 from the matching CString side).
+//
+// Baseline: 6 allocs (1 Go string copy + 5 cgo.Free tracker round-trip).
+// Ceiling = 6 to detect regressions in the tracker-aware Free path or
+// the C.GoString allocation shape.
+func TestAllocBudget_AdoptCString(t *testing.T) {
+	allocBudget(t, "AdoptCString", 6, func() {
+		p := CString("error: kernel launch failed")
+		_ = AdoptCString(unsafe.Pointer(p))
+	})
+}
