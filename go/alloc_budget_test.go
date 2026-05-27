@@ -216,3 +216,19 @@ func TestAllocBudget_WithErrno(t *testing.T) {
 		_ = WithErrno(func() testCInt { return 0 })
 	})
 }
+
+// TestAllocBudget_Scope_CString locks the scope-managed Go→C string
+// idiom — the typical kernel-launch shape that pairs a path/name with
+// scope cleanup. Pays the underlying CString tracker cost (5 allocs)
+// + the scope struct + inline-array SBO covers the first append.
+//
+// Baseline: 6 allocs (1 Scope struct + 5 CString round-trip; the
+// strings inline-array absorbs the first append). Ceiling = 6 to
+// detect regression in the SBO path or accidental tracker bloat.
+func TestAllocBudget_Scope_CString(t *testing.T) {
+	allocBudget(t, "Scope.CString", 6, func() {
+		s := NewScope()
+		_ = s.CString("hello")
+		s.FreeAll()
+	})
+}
