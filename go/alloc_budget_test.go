@@ -303,3 +303,23 @@ func TestAllocBudget_Buffer_Bytes(t *testing.T) {
 		_ = buf.Bytes()
 	})
 }
+
+// TestAllocBudget_Scope_MultiBuffer locks the composite "kernel takes
+// several buffers" shape — scope allocates 4 unmanaged buffers and
+// frees together. The buffers inline-array (scopeInlineCap == 4) is
+// sized exactly to absorb this shape without spilling to heap-backed
+// slice growth.
+//
+// Baseline: 5 allocs (1 *Scope + 4 *Buffer; appends absorbed by
+// inline-array SBO). Ceiling = 5 to detect any regression that
+// reintroduces slice growth on the first 4 appends.
+func TestAllocBudget_Scope_MultiBuffer(t *testing.T) {
+	allocBudget(t, "Scope (4 buffers)", 5, func() {
+		s := NewScope()
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		_ = s.Buffer(64)
+		s.FreeAll()
+	})
+}
