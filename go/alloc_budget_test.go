@@ -249,3 +249,18 @@ func TestAllocBudget_PinIn(t *testing.T) {
 		s.FreeAll()
 	})
 }
+
+// TestAllocBudget_AdoptCStringN locks the length-known sibling of
+// AdoptCString at parity with the null-terminated path. Same shape:
+// 1 Go string copy + 5 tracker round-trip from the matching CString.
+//
+// Baseline: 6 allocs. Ceiling = 6 to detect any divergence between the
+// AdoptCString and AdoptCStringN paths (both should route Free through
+// the same tracker-aware idiom).
+func TestAllocBudget_AdoptCStringN(t *testing.T) {
+	const payload = "error: kernel launch failed"
+	allocBudget(t, "AdoptCStringN", 6, func() {
+		p := CString(payload)
+		_ = AdoptCStringN(unsafe.Pointer(p), len(payload))
+	})
+}

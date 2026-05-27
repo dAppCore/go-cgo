@@ -139,6 +139,18 @@ func BenchmarkAdoptCString(b *testing.B) {
 	}
 }
 
+// BenchmarkAdoptCStringN measures the length-known sibling — the path
+// hit when C returns a non-null-terminated buffer with an explicit size
+// (mlx_string_data + mlx_string_size, fixed-width C struct field copies).
+func BenchmarkAdoptCStringN(b *testing.B) {
+	const payload = "error: kernel launch failed"
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		p := CString(payload)
+		_ = AdoptCStringN(unsafe.Pointer(p), len(payload))
+	}
+}
+
 // BenchmarkWithErrno measures the lambda-wrapped C-call shape used by
 // callers that want one-line cgo + Result mapping. Hot per kernel invoke.
 func BenchmarkWithErrno(b *testing.B) {
