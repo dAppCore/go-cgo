@@ -95,12 +95,11 @@ func WithErrno(fn func() C.int) core.Result {
 		panic("cgo.WithErrno: function is nil")
 	}
 
-	rc := fn()
-	r := Errno(rc)
-	if !r.OK {
-		return r
-	}
-	return core.Ok(int(rc))
+	// Errno already maps rc==0 → Ok(int(rc)) and rc!=0 → Fail(syscall.Errno).
+	// Forwarding the result directly avoids a duplicate Ok(int(rc)) materialisation
+	// on the success path and brings WithErrno under the inlining cost budget so
+	// callers see a fully inlined dispatch at the use site.
+	return Errno(fn())
 }
 
 // GoString converts a C string to Go string safely.

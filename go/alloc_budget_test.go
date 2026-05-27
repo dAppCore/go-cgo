@@ -209,8 +209,11 @@ func TestAllocBudget_Errno(t *testing.T) {
 // inlining + escape analysis turn the call site into a direct dispatch.
 //
 // Baseline: 0 allocs (closure stays on the stack, success Result is
-// value-stack only). Ceiling = 0 to catch any future edit that lets
-// the closure escape to the heap on the hot kernel-invoke path.
+// value-stack only). WithErrno forwards directly to Errno so the body
+// stays under the inline cost budget — the call site collapses to the
+// same constant-fold Result construction as a bare Errno(rc) call.
+// Ceiling = 0 to catch any future edit that lets the closure escape
+// to the heap or breaks inlinability on the hot kernel-invoke path.
 func TestAllocBudget_WithErrno(t *testing.T) {
 	allocBudget(t, "WithErrno", 0, func() {
 		_ = WithErrno(func() testCInt { return 0 })
