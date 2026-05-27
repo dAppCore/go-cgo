@@ -133,3 +133,18 @@ func TestAllocBudget_AdoptCString(t *testing.T) {
 		_ = AdoptCString(unsafe.Pointer(p))
 	})
 }
+
+// TestAllocBudget_CStringPtr_Free locks the Go→C string transport at the
+// CString+Free baseline. CStringPtr is a thin wrapper that returns the
+// CString result as unsafe.Pointer for cross-package transport — it adds
+// no allocs over the underlying CString+Free pair.
+//
+// Baseline: 5 allocs (matches CString+Free; CStringPtr is a zero-cost
+// re-cast). Ceiling = 5 to detect accidental introduction of any tracker
+// or transport overhead inside the wrapper.
+func TestAllocBudget_CStringPtr_Free(t *testing.T) {
+	allocBudget(t, "CStringPtr+Free", 5, func() {
+		p := CStringPtr("hello world")
+		Free(p)
+	})
+}
