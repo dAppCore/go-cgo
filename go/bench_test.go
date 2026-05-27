@@ -247,6 +247,20 @@ func BenchmarkBuffer_Ptr(b *testing.B) {
 	}
 }
 
+// BenchmarkBuffer_Bytes measures the slice-header accessor cost on the
+// readback / inspection path. Same shape as Buffer.Ptr — returns the
+// cached unsafe.Slice header pinned at NewBuffer time behind one
+// atomic load (assertNotFreed).
+func BenchmarkBuffer_Bytes(b *testing.B) {
+	buf := NewBuffer(64)
+	defer buf.Free()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = buf.Bytes()
+	}
+}
+
 // BenchmarkFree_Raw measures Free on a pointer NOT from CString — the
 // path consumers hit when handing cgo.Free a raw C.malloc'd pointer
 // (kernel scratch, externally-allocated buffers).

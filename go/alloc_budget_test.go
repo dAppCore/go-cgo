@@ -289,3 +289,17 @@ func TestAllocBudget_GoString(t *testing.T) {
 		_ = GoString(cStr)
 	})
 }
+
+// TestAllocBudget_Buffer_Bytes locks the slice-header accessor at zero
+// allocs. Buffer.Bytes returns the cached unsafe.Slice header pinned at
+// NewBuffer time behind one atomic load (assertNotFreed) — no path-side
+// allocation should ever appear here.
+//
+// Baseline: 0 allocs. Ceiling = 0.
+func TestAllocBudget_Buffer_Bytes(t *testing.T) {
+	buf := NewBuffer(64)
+	defer buf.Free()
+	allocBudget(t, "Buffer.Bytes", 0, func() {
+		_ = buf.Bytes()
+	})
+}
