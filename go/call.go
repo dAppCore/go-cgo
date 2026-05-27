@@ -102,7 +102,12 @@ func Call(function unsafe.Pointer, args ...interface{}) core.Result {
 		panic(core.Sprintf("cgo.Call: unsupported arity: %d", len(args)))
 	}
 
-	encoded := make([]uintptr, len(args))
+	// Stack-resident scratch keyed to the arity ceiling: avoids the heap
+	// alloc that make([]uintptr, len(args)) incurs when escape analysis
+	// can't prove the slice doesn't outlive the call (it can't, because
+	// the C dispatch reads from it). 18 is the documented arity max.
+	var scratch [18]uintptr
+	encoded := scratch[:len(args)]
 	for i, arg := range args {
 		encoded[i] = encodeCallArg(i+1, arg)
 	}
