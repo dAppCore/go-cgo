@@ -323,3 +323,17 @@ func TestAllocBudget_Scope_MultiBuffer(t *testing.T) {
 		s.FreeAll()
 	})
 }
+
+// TestAllocBudget_Buffer_Close locks the Result-returning lifecycle
+// close at parity with Free + NewBuffer. core.Ok(nil) must stay on the
+// value stack — only the *Buffer struct alloc contributes.
+//
+// Baseline: 1 alloc (the *Buffer struct itself). Ceiling = 1 to detect
+// any future edit that boxes the Result return into the heap on the
+// `defer buf.Close()` end-of-life path.
+func TestAllocBudget_Buffer_Close(t *testing.T) {
+	allocBudget(t, "Buffer.Close", 1, func() {
+		buf := NewBuffer(64)
+		_ = buf.Close()
+	})
+}

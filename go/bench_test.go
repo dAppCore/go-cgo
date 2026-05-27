@@ -261,6 +261,28 @@ func BenchmarkBuffer_Bytes(b *testing.B) {
 	}
 }
 
+// BenchmarkBuffer_Close measures the Result-returning lifecycle close —
+// what callers using `defer buf.Close()` pay per buffer end-of-life.
+// Same teardown as Free plus the core.Ok(nil) Result construction.
+func BenchmarkBuffer_Close(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		buf := NewBuffer(64)
+		_ = buf.Close()
+	}
+}
+
+// BenchmarkScope_Close measures the Result-returning scope lifecycle
+// close — what callers using `defer scope.Close()` pay per kernel
+// launch end-of-life. Same teardown as FreeAll plus core.Ok(nil).
+func BenchmarkScope_Close(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s := NewScope()
+		_ = s.Close()
+	}
+}
+
 // BenchmarkFree_Raw measures Free on a pointer NOT from CString — the
 // path consumers hit when handing cgo.Free a raw C.malloc'd pointer
 // (kernel scratch, externally-allocated buffers).
