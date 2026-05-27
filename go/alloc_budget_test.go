@@ -74,6 +74,17 @@ func TestAllocBudget_NewBuffer(t *testing.T) {
 	})
 }
 
+// TestAllocBudget_NewBufferUnmanaged locks the no-finalizer variant at
+// 1 alloc — same struct cost as NewBuffer, with the per-call latency
+// drop coming from the eliminated runtime.SetFinalizer call, not from
+// fewer allocations.
+func TestAllocBudget_NewBufferUnmanaged(t *testing.T) {
+	allocBudget(t, "NewBufferUnmanaged", 1, func() {
+		buf := NewBufferUnmanaged(64)
+		buf.Free()
+	})
+}
+
 // TestAllocBudget_Scope_Buffer locks the SBO win on Scope.Buffer.
 // Pre-SBO: 3 allocs (Scope + Buffer + first append into nil slice).
 // Post-SBO: 2 allocs (Scope + Buffer; append fits in inline array).

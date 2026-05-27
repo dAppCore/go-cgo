@@ -73,6 +73,17 @@ func BenchmarkNewBuffer(b *testing.B) {
 	}
 }
 
+// BenchmarkNewBufferUnmanaged measures the no-finalizer construction path
+// — what consumers with guaranteed Free coverage opt into for the
+// kernel-launch hot loop. Expected ~60 ns faster than NewBuffer.
+func BenchmarkNewBufferUnmanaged(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		buf := NewBufferUnmanaged(64)
+		buf.Free()
+	}
+}
+
 // BenchmarkScope_CString measures the common scoped-allocation idiom that
 // every cgo consumer reaches for when building a path/name argument.
 func BenchmarkScope_CString(b *testing.B) {

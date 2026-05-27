@@ -31,22 +31,49 @@ type Buffer struct {
 //	input := make([]byte, 32)
 //	buffer := NewBuffer(len(input))
 //	defer buffer.Free()
+//
+// NewBuffer installs a GC finalizer that calls Free if the caller drops
+// the *Buffer without calling Free explicitly — the safe default. For
+// hot-loop allocators where Free is guaranteed (defer in the same
+// function, or scope-owned), see NewBufferUnmanaged for a ~60 ns faster
+// path that skips the finalizer.
 func NewBuffer(size int) *Buffer {
-	buffer := newBufferRaw(size)
+	buffer := NewBufferUnmanaged(size)
 	runtime.SetFinalizer(buffer, func(owned *Buffer) {
 		owned.free(true)
 	})
 	return buffer
 }
 
-// newBufferRaw allocates a Buffer without registering a GC finalizer. The
-// caller is responsible for ensuring Free() is called — either explicitly
-// or via an owning collector (Scope) that drains its buffers in FreeAll.
-// Avoiding the SetFinalizer call shaves ~60 ns and removes a GC root for
-// scope-managed buffers, where the scope's own finalizer + FreeAll path
-// already guarantees cleanup. Internal-only — external callers should
-// continue to use NewBuffer.
-func newBufferRaw(size int) *Buffer {
+// NewBufferUnmanaged allocates a C-backed byte buffer WITHOUT a GC
+// finalizer. The caller MUST call Free — either directly or via an
+// owning collector — or the underlying malloc leaks. In return, the
+// per-call cost drops by ~60 ns (the runtime.SetFinalizer cost on
+// NewBuffer's hot path).
+//
+//	// Safe shape: defer in same scope as construction.
+//	buffer := cgo.NewBufferUnmanaged(size)
+//	defer buffer.Free()
+//	C.kernel_launch(buffer.Ptr(), C.size_t(buffer.Len()))
+//
+// Safe to use when ANY of these hold:
+//   - the *Buffer is paired with a `defer buffer.Free()` in the same
+//     function (defer guarantees Free runs even on panic)
+//   - the *Buffer is handed to an owning collector that calls Free in
+//     its own cleanup (e.g. NewScope().Buffer uses this internally)
+//   - the caller has an audited Free path on every code branch
+//
+// NOT safe when:
+//   - the *Buffer is returned from a constructor without finalizer
+//     coverage at the OUTERMOST owner
+//   - the *Buffer is stored in a long-lived data structure whose
+//     lifetime is unclear at allocation time
+//   - the surrounding code might panic between alloc and Free without
+//     a defer-Free guard
+//
+// When in doubt, use NewBuffer — the GC safety net is cheap insurance
+// at typical (non-hot-loop) call rates.
+func NewBufferUnmanaged(size int) *Buffer {
 	if size < 0 {
 		panic("cgo.NewBuffer: size must be non-negative")
 	}

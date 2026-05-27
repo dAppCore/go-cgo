@@ -35,6 +35,46 @@ func TestBuffer_NewBuffer_Ugly(t *T) {
 	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
 }
 
+func TestBuffer_NewBufferUnmanaged_Good(t *T) {
+	buffer := NewBufferUnmanaged(8)
+	defer buffer.Free()
+
+	AssertNotNil(t, buffer)
+	AssertFalse(t, buffer.IsFreed())
+	AssertEqual(t, 8, buffer.Len())
+	AssertLen(t, buffer.Bytes(), 8)
+	AssertNotNil(t, buffer.Ptr())
+}
+
+func TestBuffer_NewBufferUnmanaged_Bad(t *T) {
+	AssertPanicsWithError(t, "size must be non-negative", func() {
+		_ = NewBufferUnmanaged(-1)
+	})
+	AssertNotPanics(t, func() {
+		buffer := NewBufferUnmanaged(1)
+		buffer.Free()
+	})
+}
+
+func TestBuffer_NewBufferUnmanaged_Ugly(t *T) {
+	// Zero-size unmanaged is still safe to Free — same shape as NewBuffer.
+	buffer := NewBufferUnmanaged(0)
+	defer buffer.Free()
+
+	AssertEqual(t, 0, buffer.Len())
+	AssertEmpty(t, buffer.Bytes())
+	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
+
+	// Explicit Free behaves identically — double-Free still panics, so
+	// the caller's contract is unchanged versus the managed variant.
+	buf2 := NewBufferUnmanaged(4)
+	buf2.Free()
+	AssertTrue(t, buf2.IsFreed())
+	AssertPanicsWithError(t, doubleFreeMessage, func() {
+		buf2.Free()
+	})
+}
+
 func TestBuffer_Buffer_Free_Good(t *T) {
 	buffer := NewBuffer(4)
 	buffer.Free()
