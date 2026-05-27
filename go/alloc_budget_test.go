@@ -337,3 +337,17 @@ func TestAllocBudget_Buffer_Close(t *testing.T) {
 		_ = buf.Close()
 	})
 }
+
+// TestAllocBudget_Scope_Close locks the Result-returning scope close at
+// parity with FreeAll + NewScope. core.Ok(nil) must stay on the value
+// stack — only the *Scope struct alloc contributes.
+//
+// Baseline: 1 alloc (the *Scope struct itself). Ceiling = 1 to detect
+// any future edit that boxes the Result return into the heap on the
+// `defer scope.Close()` end-of-life path.
+func TestAllocBudget_Scope_Close(t *testing.T) {
+	allocBudget(t, "Scope.Close", 1, func() {
+		s := NewScope()
+		_ = s.Close()
+	})
+}
