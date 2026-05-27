@@ -264,3 +264,14 @@ func TestAllocBudget_AdoptCStringN(t *testing.T) {
 		_ = AdoptCStringN(unsafe.Pointer(p), len(payload))
 	})
 }
+
+// TestAllocBudget_Int locks the bounds-checked Go int → C.int
+// conversion at zero allocs. Same shape as SizeT — non-overflow path
+// is a constant switch + cast, panic branches off the hot path.
+//
+// Baseline: 0 allocs. Ceiling = 0.
+func TestAllocBudget_Int(t *testing.T) {
+	allocBudget(t, "Int", 0, func() {
+		_ = Int(1024)
+	})
+}

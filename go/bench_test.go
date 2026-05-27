@@ -189,6 +189,15 @@ func BenchmarkSizeT(b *testing.B) {
 	}
 }
 
+// BenchmarkInt exercises the integer-bounds-checked C.int conversion —
+// the sibling of SizeT used for signed cgo argument transport.
+func BenchmarkInt(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = Int(1024)
+	}
+}
+
 // BenchmarkCStringPtr round-trips a Go string through CStringPtr+Free —
 // the cross-package CString variant returning unsafe.Pointer directly.
 func BenchmarkCStringPtr_Free(b *testing.B) {
