@@ -72,7 +72,11 @@ func (s *Scope) Buffer(size int) *Buffer {
 		panic("cgo.Scope.Buffer: scope is already freed")
 	}
 
-	buffer := NewBuffer(size)
+	// newBufferRaw: scope's freeAll already drains s.buffers via
+	// buffer.free(true), and scope itself has a finalizer covering the
+	// caller-forgot path. The Buffer's own finalizer is redundant here
+	// — skipping it shaves the SetFinalizer cost per scope.Buffer call.
+	buffer := newBufferRaw(size)
 	s.buffers = append(s.buffers, buffer)
 	return buffer
 }

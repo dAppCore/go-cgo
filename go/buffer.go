@@ -32,6 +32,21 @@ type Buffer struct {
 //	buffer := NewBuffer(len(input))
 //	defer buffer.Free()
 func NewBuffer(size int) *Buffer {
+	buffer := newBufferRaw(size)
+	runtime.SetFinalizer(buffer, func(owned *Buffer) {
+		owned.free(true)
+	})
+	return buffer
+}
+
+// newBufferRaw allocates a Buffer without registering a GC finalizer. The
+// caller is responsible for ensuring Free() is called — either explicitly
+// or via an owning collector (Scope) that drains its buffers in FreeAll.
+// Avoiding the SetFinalizer call shaves ~60 ns and removes a GC root for
+// scope-managed buffers, where the scope's own finalizer + FreeAll path
+// already guarantees cleanup. Internal-only — external callers should
+// continue to use NewBuffer.
+func newBufferRaw(size int) *Buffer {
 	if size < 0 {
 		panic("cgo.NewBuffer: size must be non-negative")
 	}
@@ -47,17 +62,11 @@ func NewBuffer(size int) *Buffer {
 		data = unsafe.Slice((*byte)(pointer), size)
 	}
 
-	buffer := &Buffer{
+	return &Buffer{
 		data:    data,
 		length:  size,
 		pointer: pointer,
 	}
-
-	runtime.SetFinalizer(buffer, func(owned *Buffer) {
-		owned.free(true)
-	})
-
-	return buffer
 }
 
 // Free releases the pinned memory backing slice and marks the buffer as freed.
