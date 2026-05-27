@@ -148,3 +148,19 @@ func TestAllocBudget_CStringPtr_Free(t *testing.T) {
 		Free(p)
 	})
 }
+
+// TestAllocBudget_Buffer_CopyFrom locks the H2D copy hot path at zero
+// allocs — the shape every kernel launch hits per Host→Device transfer.
+// Buffer.CopyFrom is a pure `copy()` over the unsafe.Slice header pinned
+// at NewBuffer time; nothing on this path should ever allocate.
+//
+// Baseline: 0 allocs (pure memmove). Ceiling = 0 to catch any future
+// edit that materialises a temporary slice or escapes src to the heap.
+func TestAllocBudget_Buffer_CopyFrom(t *testing.T) {
+	buf := NewBuffer(1024)
+	defer buf.Free()
+	src := make([]byte, 1024)
+	allocBudget(t, "Buffer.CopyFrom", 0, func() {
+		_ = buf.CopyFrom(src)
+	})
+}
