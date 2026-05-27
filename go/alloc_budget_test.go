@@ -164,3 +164,17 @@ func TestAllocBudget_Buffer_CopyFrom(t *testing.T) {
 		_ = buf.CopyFrom(src)
 	})
 }
+
+// TestAllocBudget_Buffer_Ptr locks the kernel-arg-encoding accessor at
+// zero allocs. Buffer.Ptr returns the cached unsafe.Pointer from the
+// receiver; the only path-side cost is the assertNotFreed atomic load.
+// Any alloc on this path would be a regression.
+//
+// Baseline: 0 allocs. Ceiling = 0.
+func TestAllocBudget_Buffer_Ptr(t *testing.T) {
+	buf := NewBuffer(64)
+	defer buf.Free()
+	allocBudget(t, "Buffer.Ptr", 0, func() {
+		_ = buf.Ptr()
+	})
+}
