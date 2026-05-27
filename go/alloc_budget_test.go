@@ -275,3 +275,17 @@ func TestAllocBudget_Int(t *testing.T) {
 		_ = Int(1024)
 	})
 }
+
+// TestAllocBudget_GoString locks the nil-safe C→Go string copy that
+// does NOT free the C side at 1 alloc — the Go string body itself
+// (unavoidable; C.GoString must materialise a new Go-managed copy).
+//
+// Baseline: 1 alloc. Ceiling = 1 to detect any future edit that adds
+// a wrapper or routes through an interface-boxing path.
+func TestAllocBudget_GoString(t *testing.T) {
+	cStr := CString("hello world")
+	defer Free(unsafe.Pointer(cStr))
+	allocBudget(t, "GoString", 1, func() {
+		_ = GoString(cStr)
+	})
+}

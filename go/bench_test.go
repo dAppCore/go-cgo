@@ -198,6 +198,19 @@ func BenchmarkInt(b *testing.B) {
 	}
 }
 
+// BenchmarkGoString exercises the nil-safe C→Go string copy that does
+// NOT free the C side — used when the C string remains C-owned
+// (constants, longer-lived buffers). Source pointer reused across
+// iterations to isolate the copy + nil-check cost from the alloc.
+func BenchmarkGoString(b *testing.B) {
+	cStr := CString("hello world")
+	defer Free(unsafe.Pointer(cStr))
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = GoString(cStr)
+	}
+}
+
 // BenchmarkCStringPtr round-trips a Go string through CStringPtr+Free —
 // the cross-package CString variant returning unsafe.Pointer directly.
 func BenchmarkCStringPtr_Free(b *testing.B) {
