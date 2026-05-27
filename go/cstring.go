@@ -33,7 +33,12 @@ func AdoptCString(cStr unsafe.Pointer) string {
 		return ""
 	}
 	s := C.GoString((*C.char)(cStr))
-	C.free(cStr)
+	// Route through cgo.Free so the cStringAllocations tracker entry sheds
+	// in lockstep with the C-side free. Calling C.free directly would
+	// leave a stale {freed=false} entry that a later address-reuse path
+	// would mistake for a live allocation, eventually silently skipping a
+	// real free via the freedPointers idempotency gate.
+	Free(cStr)
 	return s
 }
 
@@ -74,10 +79,11 @@ func AdoptCStringN(cStr unsafe.Pointer, n int) string {
 		return ""
 	}
 	if n <= 0 {
-		C.free(cStr)
+		// Tracker-aware free: see AdoptCString for the rationale.
+		Free(cStr)
 		return ""
 	}
 	s := C.GoStringN((*C.char)(cStr), C.int(n))
-	C.free(cStr)
+	Free(cStr)
 	return s
 }
