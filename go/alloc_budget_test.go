@@ -73,3 +73,26 @@ func TestAllocBudget_NewBuffer(t *testing.T) {
 		buf.Free()
 	})
 }
+
+// TestAllocBudget_Scope_Buffer locks the SBO win on Scope.Buffer.
+// Pre-SBO: 3 allocs (Scope + Buffer + first append into nil slice).
+// Post-SBO: 2 allocs (Scope + Buffer; append fits in inline array).
+//
+// Ceiling = 2 to detect regression that resurrects the first-append heap
+// allocation (e.g. inline arrays accidentally bypassed in NewScope).
+func TestAllocBudget_Scope_Buffer(t *testing.T) {
+	allocBudget(t, "Scope.Buffer", 2, func() {
+		s := NewScope()
+		_ = s.Buffer(64)
+		s.FreeAll()
+	})
+}
+
+// TestAllocBudget_Scope_Empty locks the bare scope lifecycle at 1 alloc
+// (the *Scope struct itself, finalizer-bound).
+func TestAllocBudget_Scope_Empty(t *testing.T) {
+	allocBudget(t, "Scope (empty)", 1, func() {
+		s := NewScope()
+		s.FreeAll()
+	})
+}

@@ -14,6 +14,14 @@ import (
 	core "dappco.re/go"
 )
 
+// scopeInlineCap is the small-buffer-optimisation capacity for the per-kind
+// tracking arrays. The common scope shape is "one or two of each" (a buffer
+// + a path string + a pinned weight tensor in a kernel launch); inline
+// storage at this size lets the first ~4 appends per kind stay on the
+// scope's own struct, avoiding the heap alloc that fresh nil-slice growth
+// would otherwise incur.
+const scopeInlineCap = 4
+
 // Scope tracks multiple C allocations and releases them together.
 //
 //	scope := NewScope()
@@ -21,11 +29,14 @@ import (
 //	buffer := scope.Buffer(32)
 //	cString := scope.CString("hello")
 type Scope struct {
-	lock    sync.Mutex
-	buffers []*Buffer
-	strings []unsafe.Pointer
-	pins    []*core.PinnedView
-	freed   atomic.Bool
+	lock           sync.Mutex
+	buffers        []*Buffer
+	strings        []unsafe.Pointer
+	pins           []*core.PinnedView
+	buffersInline  [scopeInlineCap]*Buffer
+	stringsInline  [scopeInlineCap]unsafe.Pointer
+	pinsInline     [scopeInlineCap]*core.PinnedView
+	freed          atomic.Bool
 }
 
 // NewScope creates a grouped allocator for temporary C memory.
@@ -34,6 +45,12 @@ type Scope struct {
 //	defer scope.FreeAll()
 func NewScope() *Scope {
 	scope := &Scope{}
+	// Slice headers point into the inline arrays (len=0, cap=scopeInlineCap).
+	// Appends up to scopeInlineCap stay on the Scope struct itself; growth
+	// past that falls back to standard heap-backed slice doubling.
+	scope.buffers = scope.buffersInline[:0:scopeInlineCap]
+	scope.strings = scope.stringsInline[:0:scopeInlineCap]
+	scope.pins = scope.pinsInline[:0:scopeInlineCap]
 	runtime.SetFinalizer(scope, func(owned *Scope) {
 		owned.freeAll(true)
 	})

@@ -83,3 +83,65 @@ func BenchmarkScope_CString(b *testing.B) {
 		s.FreeAll()
 	}
 }
+
+// BenchmarkScope_Buffer measures the second composing path — scope-managed
+// Buffer allocation, the typical kernel-launch shape.
+func BenchmarkScope_Buffer(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s := NewScope()
+		_ = s.Buffer(64)
+		s.FreeAll()
+	}
+}
+
+// BenchmarkScope_Empty measures the bare-scope lifecycle cost — what every
+// scoped cgo block pays even before allocating anything.
+func BenchmarkScope_Empty(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s := NewScope()
+		s.FreeAll()
+	}
+}
+
+// BenchmarkBuffer_CopyFrom measures the data-transfer hot path on a reused
+// Buffer — the shape every ROCm/MLX/CUDA kernel launch hits per H2D copy.
+func BenchmarkBuffer_CopyFrom(b *testing.B) {
+	buf := NewBuffer(1024)
+	defer buf.Free()
+	src := make([]byte, 1024)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = buf.CopyFrom(src)
+	}
+}
+
+// BenchmarkAdoptCString measures the C→Go string adoption shape used for
+// adopting error messages from mlx/sqlite/curl.
+func BenchmarkAdoptCString(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		p := CString("error: kernel launch failed")
+		_ = AdoptCString(unsafe.Pointer(p))
+	}
+}
+
+// BenchmarkWithErrno measures the lambda-wrapped C-call shape used by
+// callers that want one-line cgo + Result mapping. Hot per kernel invoke.
+func BenchmarkWithErrno(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = WithErrno(func() testCInt { return 0 })
+	}
+}
+
+// BenchmarkErrno measures the bare rc→Result mapping, the floor underneath
+// WithErrno + Call.
+func BenchmarkErrno(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = Errno(0)
+	}
+}
