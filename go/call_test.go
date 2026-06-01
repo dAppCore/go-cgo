@@ -64,6 +64,18 @@ func TestCall_Call_EmptyBytes_Good(t *T) {
 	AssertEqual(t, uintptr(0), testCallSum())
 }
 
+// TestCall_Call_NonEmptyBytes_Good exercises the non-empty []byte branch of
+// encodeCallArg, which must encode the address of the slice's first element
+// (a non-zero pointer) rather than the zero an empty slice yields.
+func TestCall_Call_NonEmptyBytes_Good(t *T) {
+	testCallReset()
+	payload := []byte("cgo")
+	r := Call(testCallPtr1(), payload)
+
+	AssertTrue(t, r.OK)
+	AssertNotEqual(t, uintptr(0), testCallSum())
+}
+
 func TestCall_Call_UintptrLike_Good(t *T) {
 	testCallReset()
 	r := Call(testCallPtr1(), testUintptr(15))

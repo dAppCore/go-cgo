@@ -102,6 +102,20 @@ func TestStringConversion_WithErrno_Ugly(t *T) {
 	AssertErrorIs(t, r.Value.(error), syscall.Errno(2))
 }
 
+// TestStringConversion_WithErrno_CReturn_Good drives WithErrno through a
+// closure whose return value originates from a C int (via testWithErrno),
+// exercising the same success/failure mapping as the Go-typed cases but
+// from the C side of the boundary.
+func TestStringConversion_WithErrno_CReturn_Good(t *T) {
+	r := testWithErrno(0)
+	AssertTrue(t, r.OK)
+	AssertEqual(t, 0, r.Value)
+
+	r = testWithErrno(2)
+	AssertFalse(t, r.OK)
+	AssertErrorIs(t, r.Value.(error), syscall.Errno(2))
+}
+
 func TestStringConversion_GoString_Good(t *T) {
 	ptr := CString("hello")
 	defer Free(unsafe.Pointer(ptr))
