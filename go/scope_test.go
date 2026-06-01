@@ -1,5 +1,7 @@
 package cgo
 
+import "runtime"
+
 func TestScope_NewScope_Good(t *T) {
 	scope := NewScope()
 	defer scope.FreeAll()
@@ -168,6 +170,50 @@ func TestScope_Scope_IsFreed_Ugly(t *T) {
 	AssertTrue(t, scope.IsFreed())
 	AssertNotPanics(t, func() {
 		scope.FreeAll()
+	})
+}
+
+// TestScope_NewScope_FinalizerFreesOnDrop exercises the GC safety net: a
+// scope whose only reference is dropped without FreeAll must still have its
+// C allocations released by the finalizer NewScope installs. The buffer is
+// captured separately so its IsFreed flag can be observed after the scope is
+// collected — the NewScope finalizer runs freeAll(true), which drains
+// s.buffers via buffer.free(true).
+func TestScope_NewScope_FinalizerFreesOnDrop(t *T) {
+	var buffer *Buffer
+
+	func() {
+		scope := NewScope()
+		buffer = scope.Buffer(8)
+		// scope goes out of scope here with no FreeAll — only the GC
+		// finalizer installed by NewScope can release it.
+	}()
+
+	freed := false
+	for i := 0; i < 50 && !freed; i++ {
+		runtime.GC()
+		freed = buffer.IsFreed()
+	}
+
+	if !freed {
+		t.Fatalf("scope finalizer did not free the buffer after GC; the GC safety net is broken")
+	}
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestScope_Scope_Buffer_NilScope_Panics(t *T) {
+	var scope *Scope
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		_ = scope.Buffer(1)
+	})
+}
+
+func TestScope_Scope_CString_NilScope_Panics(t *T) {
+	var scope *Scope
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		_ = scope.CString("x")
 	})
 }
 
