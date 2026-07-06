@@ -1,5 +1,7 @@
 package cgo
 
+import "runtime"
+
 func TestScope_NewScope_Good(t *T) {
 	scope := NewScope()
 	defer scope.FreeAll()
@@ -168,5 +170,98 @@ func TestScope_Scope_IsFreed_Ugly(t *T) {
 	AssertTrue(t, scope.IsFreed())
 	AssertNotPanics(t, func() {
 		scope.FreeAll()
+	})
+}
+
+// TestScope_NewScope_FinalizerFreesOnDrop exercises the GC safety net: a
+// scope whose only reference is dropped without FreeAll must still have its
+// C allocations released by the finalizer NewScope installs. The buffer is
+// captured separately so its IsFreed flag can be observed after the scope is
+// collected — the NewScope finalizer runs freeAll(true), which drains
+// s.buffers via buffer.free(true).
+func TestScope_NewScope_FinalizerFreesOnDrop(t *T) {
+	var buffer *Buffer
+
+	func() {
+		scope := NewScope()
+		buffer = scope.Buffer(8)
+		// scope goes out of scope here with no FreeAll — only the GC
+		// finalizer installed by NewScope can release it.
+	}()
+
+	freed := false
+	for i := 0; i < 50 && !freed; i++ {
+		runtime.GC()
+		freed = buffer.IsFreed()
+	}
+
+	if !freed {
+		t.Fatalf("scope finalizer did not free the buffer after GC; the GC safety net is broken")
+	}
+	AssertTrue(t, buffer.IsFreed())
+}
+
+func TestScope_Scope_Buffer_NilScope_Panics(t *T) {
+	var scope *Scope
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		_ = scope.Buffer(1)
+	})
+}
+
+func TestScope_Scope_CString_NilScope_Panics(t *T) {
+	var scope *Scope
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		_ = scope.CString("x")
+	})
+}
+
+func TestScope_PinIn_Good(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	slice := []int32{1, 2, 3, 4}
+	view := PinIn(scope, slice)
+
+	AssertNotNil(t, view)
+	AssertTrue(t, view.Active())
+	AssertEqual(t, 4, view.Len())
+	AssertEqual(t, 16, view.Bytes())
+}
+
+func TestScope_PinIn_EmptySlice(t *T) {
+	scope := NewScope()
+	defer scope.FreeAll()
+
+	var slice []int32
+	view := PinIn(scope, slice)
+
+	AssertNotNil(t, view)
+	AssertFalse(t, view.Active())
+}
+
+func TestScope_PinIn_ReleasedOnFreeAll(t *T) {
+	scope := NewScope()
+	slice := []float32{1, 2, 3, 4}
+	view := PinIn(scope, slice)
+
+	AssertTrue(t, view.Active())
+	scope.FreeAll()
+	AssertFalse(t, view.Active())
+}
+
+func TestScope_PinIn_NilScope_Panics(t *T) {
+	AssertPanicsWithError(t, "scope is nil", func() {
+		PinIn[int32](nil, []int32{1, 2})
+	})
+}
+
+func TestScope_PinIn_FreedScope_Panics(t *T) {
+	scope := NewScope()
+	scope.FreeAll()
+
+	AssertPanicsWithError(t, "scope is already freed", func() {
+		PinIn(scope, []int32{1, 2})
 	})
 }

@@ -14,6 +14,14 @@ import (
 	core "dappco.re/go"
 )
 
+// scopeInlineCap is the small-buffer-optimisation capacity for the per-kind
+// tracking arrays. The common scope shape is "one or two of each" (a buffer
+// + a path string + a pinned weight tensor in a kernel launch); inline
+// storage at this size lets the first ~4 appends per kind stay on the
+// scope's own struct, avoiding the heap alloc that fresh nil-slice growth
+// would otherwise incur.
+const scopeInlineCap = 4
+
 // Scope tracks multiple C allocations and releases them together.
 //
 //	scope := NewScope()
@@ -21,10 +29,14 @@ import (
 //	buffer := scope.Buffer(32)
 //	cString := scope.CString("hello")
 type Scope struct {
-	lock    sync.Mutex
-	buffers []*Buffer
-	strings []unsafe.Pointer
-	freed   atomic.Bool
+	lock           sync.Mutex
+	buffers        []*Buffer
+	strings        []unsafe.Pointer
+	pins           []*core.PinnedView
+	buffersInline  [scopeInlineCap]*Buffer
+	stringsInline  [scopeInlineCap]unsafe.Pointer
+	pinsInline     [scopeInlineCap]*core.PinnedView
+	freed          atomic.Bool
 }
 
 // NewScope creates a grouped allocator for temporary C memory.
@@ -33,6 +45,12 @@ type Scope struct {
 //	defer scope.FreeAll()
 func NewScope() *Scope {
 	scope := &Scope{}
+	// Slice headers point into the inline arrays (len=0, cap=scopeInlineCap).
+	// Appends up to scopeInlineCap stay on the Scope struct itself; growth
+	// past that falls back to standard heap-backed slice doubling.
+	scope.buffers = scope.buffersInline[:0:scopeInlineCap]
+	scope.strings = scope.stringsInline[:0:scopeInlineCap]
+	scope.pins = scope.pinsInline[:0:scopeInlineCap]
 	runtime.SetFinalizer(scope, func(owned *Scope) {
 		owned.freeAll(true)
 	})
@@ -54,7 +72,11 @@ func (s *Scope) Buffer(size int) *Buffer {
 		panic("cgo.Scope.Buffer: scope is already freed")
 	}
 
-	buffer := NewBuffer(size)
+	// NewBufferUnmanaged: scope's freeAll already drains s.buffers via
+	// buffer.free(true), and scope itself has a finalizer covering the
+	// caller-forgot path. The Buffer's own finalizer is redundant here
+	// — skipping it shaves the SetFinalizer cost per scope.Buffer call.
+	buffer := NewBufferUnmanaged(size)
 	s.buffers = append(s.buffers, buffer)
 	return buffer
 }
@@ -125,8 +147,10 @@ func (s *Scope) freeAll(noPanic bool) bool {
 	s.lock.Lock()
 	buffers := s.buffers
 	strings := s.strings
+	pins := s.pins
 	s.buffers = nil
 	s.strings = nil
+	s.pins = nil
 	s.lock.Unlock()
 
 	for _, buffer := range buffers {
@@ -138,5 +162,41 @@ func (s *Scope) freeAll(noPanic bool) bool {
 	for _, pointer := range strings {
 		Free(pointer)
 	}
+
+	for _, pin := range pins {
+		pin.Release()
+	}
 	return true
+}
+
+// PinIn pins slice's backing array under scope's lifetime — the pin
+// is released when scope.FreeAll runs. The returned *core.PinnedView
+// can be passed to C via Ptr()/Len()/Bytes() and remains valid until
+// FreeAll. Use this for slices C may retain across more than one
+// cgo invocation (async kernels, mlx_array data slots, weight
+// tensors) that the surrounding scope already manages.
+//
+//	scope := cgo.NewScope()
+//	defer scope.FreeAll()
+//	weights := cgo.PinIn(scope, modelWeights)
+//	C.kernel_load(weights.Ptr(), C.size_t(weights.Bytes()))
+//
+// For one-shot calls where C consumes the pointer during the call,
+// pass &slice[0] directly — the cgo runtime already prevents GC
+// movement for the call's duration without a pin.
+func PinIn[T any](scope *Scope, slice []T) *core.PinnedView {
+	if scope == nil {
+		panic("cgo.PinIn: scope is nil")
+	}
+	scope.lock.Lock()
+	defer scope.lock.Unlock()
+	if scope.freed.Load() {
+		panic("cgo.PinIn: scope is already freed")
+	}
+	view := &core.PinnedView{}
+	core.PinSlice(slice, view)
+	if view.Active() {
+		scope.pins = append(scope.pins, view)
+	}
+	return view
 }

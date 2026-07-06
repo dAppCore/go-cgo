@@ -5,6 +5,22 @@ const (
 	useAfterFreeMessage = "use-after-free detected"
 )
 
+// TestBuffer_NewBuffer_FinalizerNoPanicAfterFree exercises the free(true)
+// double-free guard: when Free has already run, the finalizer's free(true)
+// must return false rather than panic. This is the noPanic branch that the
+// GC safety net relies on to stay quiet when the caller did the right thing.
+func TestBuffer_NewBuffer_FinalizerNoPanicAfterFree(t *T) {
+	buffer := NewBuffer(4)
+	buffer.Free()
+
+	// Simulate the finalizer firing after an explicit Free: must be a
+	// silent no-op (returns false), never a panic.
+	AssertNotPanics(t, func() {
+		ran := buffer.free(true)
+		AssertFalse(t, ran)
+	})
+}
+
 func TestBuffer_NewBuffer_Good(t *T) {
 	buffer := NewBuffer(8)
 	defer buffer.Free()
@@ -33,6 +49,46 @@ func TestBuffer_NewBuffer_Ugly(t *T) {
 	AssertEqual(t, 0, buffer.Len())
 	AssertEmpty(t, buffer.Bytes())
 	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
+}
+
+func TestBuffer_NewBufferUnmanaged_Good(t *T) {
+	buffer := NewBufferUnmanaged(8)
+	defer buffer.Free()
+
+	AssertNotNil(t, buffer)
+	AssertFalse(t, buffer.IsFreed())
+	AssertEqual(t, 8, buffer.Len())
+	AssertLen(t, buffer.Bytes(), 8)
+	AssertNotNil(t, buffer.Ptr())
+}
+
+func TestBuffer_NewBufferUnmanaged_Bad(t *T) {
+	AssertPanicsWithError(t, "size must be non-negative", func() {
+		_ = NewBufferUnmanaged(-1)
+	})
+	AssertNotPanics(t, func() {
+		buffer := NewBufferUnmanaged(1)
+		buffer.Free()
+	})
+}
+
+func TestBuffer_NewBufferUnmanaged_Ugly(t *T) {
+	// Zero-size unmanaged is still safe to Free — same shape as NewBuffer.
+	buffer := NewBufferUnmanaged(0)
+	defer buffer.Free()
+
+	AssertEqual(t, 0, buffer.Len())
+	AssertEmpty(t, buffer.Bytes())
+	AssertEqual(t, uintptr(0), uintptr(buffer.Ptr()))
+
+	// Explicit Free behaves identically — double-Free still panics, so
+	// the caller's contract is unchanged versus the managed variant.
+	buf2 := NewBufferUnmanaged(4)
+	buf2.Free()
+	AssertTrue(t, buf2.IsFreed())
+	AssertPanicsWithError(t, doubleFreeMessage, func() {
+		buf2.Free()
+	})
 }
 
 func TestBuffer_Buffer_Free_Good(t *T) {

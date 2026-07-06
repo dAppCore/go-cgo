@@ -95,12 +95,11 @@ func WithErrno(fn func() C.int) core.Result {
 		panic("cgo.WithErrno: function is nil")
 	}
 
-	rc := fn()
-	r := Errno(rc)
-	if !r.OK {
-		return r
-	}
-	return core.Ok(int(rc))
+	// Errno already maps rc==0 → Ok(int(rc)) and rc!=0 → Fail(syscall.Errno).
+	// Forwarding the result directly avoids a duplicate Ok(int(rc)) materialisation
+	// on the success path and brings WithErrno under the inlining cost budget so
+	// callers see a fully inlined dispatch at the use site.
+	return Errno(fn())
 }
 
 // GoString converts a C string to Go string safely.
@@ -156,10 +155,13 @@ func Free(ptr unsafe.Pointer) {
 		return
 	}
 
+	// LoadOrStore both checks for prior free and records this free in one
+	// op. When loaded=true the pointer was already freed via this code
+	// path (idempotency contract). When loaded=false the value is already
+	// recorded — no follow-up Store needed.
 	if _, loaded := freedPointers.LoadOrStore(addr, struct{}{}); loaded {
 		return
 	}
 
 	C.free(ptr)
-	freedPointers.Store(addr, struct{}{})
 }
