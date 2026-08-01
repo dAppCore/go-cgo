@@ -2,4 +2,4 @@ module dappco.re/go/cgo
 
 go 1.26.0
 
-require dappco.re/go v0.11.0
+require dappco.re/go v0.12.0

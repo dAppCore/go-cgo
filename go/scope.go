@@ -29,14 +29,14 @@ const scopeInlineCap = 4
 //	buffer := scope.Buffer(32)
 //	cString := scope.CString("hello")
 type Scope struct {
-	lock           sync.Mutex
-	buffers        []*Buffer
-	strings        []unsafe.Pointer
-	pins           []*core.PinnedView
-	buffersInline  [scopeInlineCap]*Buffer
-	stringsInline  [scopeInlineCap]unsafe.Pointer
-	pinsInline     [scopeInlineCap]*core.PinnedView
-	freed          atomic.Bool
+	lock          sync.Mutex
+	buffers       []*Buffer
+	strings       []unsafe.Pointer
+	pins          []*core.PinnedView
+	buffersInline [scopeInlineCap]*Buffer
+	stringsInline [scopeInlineCap]unsafe.Pointer
+	pinsInline    [scopeInlineCap]*core.PinnedView
+	freed         atomic.Bool
 }
 
 // NewScope creates a grouped allocator for temporary C memory.

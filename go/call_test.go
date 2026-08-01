@@ -27,7 +27,7 @@ func TestCall_Call_Bad(t *T) {
 
 func TestCall_Call_Ugly(t *T) {
 	testCallReset()
-	args := make([]interface{}, 18)
+	args := make([]any, 18)
 	for i := range args {
 		args[i] = i + 1
 	}
@@ -92,7 +92,7 @@ func TestCall_Call_AllArities_Good(t *T) {
 	for n := 0; n <= 18; n++ {
 		testCallReset()
 
-		args := make([]interface{}, n)
+		args := make([]any, n)
 		for i := range args {
 			args[i] = i + 1
 		}
@@ -119,7 +119,7 @@ func TestCall_Call_AllArities_Good(t *T) {
 func TestCall_Call_ArgumentTypes_Good(t *T) {
 	cases := []struct {
 		name string
-		arg  interface{}
+		arg  any
 		want uintptr
 	}{
 		{"int", int(7), 7},
@@ -204,7 +204,7 @@ func TestCall_Call_ArgEncoding_Bad(t *T) {
 		_ = Call(testCallPtr1(), unsupported{x: 1})
 	})
 	AssertPanicsWithError(t, "unsupported arity: 19", func() {
-		args := make([]interface{}, 19)
+		args := make([]any, 19)
 		for i := range args {
 			args[i] = i + 1
 		}

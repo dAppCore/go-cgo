@@ -50,7 +50,7 @@ func TestCLIDriver_Run_Good(t *testing.T) {
 // second run's outcome.
 func TestCLIDriver_Run_Repeatable(t *testing.T) {
 	bin := buildDriver(t)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		cmd := exec.Command(bin)
 		cmd.Env = os.Environ()
 		if out, err := cmd.CombinedOutput(); err != nil {
