@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // scopeInlineCap is the small-buffer-optimisation capacity for the per-kind

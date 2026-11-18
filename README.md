@@ -1,6 +1,6 @@
 # go-cgo
 
-`dappco.re/go/cgo` is the Core cgo utility package. It provides the small set of
+`github.com/dappcore/go-cgo/go` is the Core cgo utility package. It provides the small set of
 allocation, conversion, and function-pointer helpers that Core packages use when
 they need to cross from Go into C without repeating ownership boilerplate.
 
@@ -18,7 +18,7 @@ The package focuses on four jobs:
 ## Install
 
 ```sh
-go get dappco.re/go/cgo
+go get github.com/dappcore/go-cgo/go
 ```
 
 The package uses cgo, so local builds need a working C toolchain and
@@ -32,8 +32,8 @@ package main
 import (
 	"unsafe"
 
-	core "dappco.re/go"
-	corecgo "dappco.re/go/cgo"
+	core "github.com/dappcore/go"
+	corecgo "github.com/dappcore/go-cgo/go"
 )
 
 func main() {

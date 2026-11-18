@@ -1,6 +1,6 @@
 package cgo
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 type T = core.T
 

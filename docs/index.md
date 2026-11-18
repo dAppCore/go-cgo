@@ -1,6 +1,6 @@
 # Documentation
 
-`dappco.re/go/cgo` is the Core package for small, repeatable cgo boundary work.
+`github.com/dappcore/go-cgo/go` is the Core package for small, repeatable cgo boundary work.
 It keeps memory ownership, string conversion, errno handling, and C function
 pointer dispatch in one place so consumer packages do not need to invent their
 own conventions for each binding.

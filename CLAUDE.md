@@ -7,7 +7,7 @@ binary as the source of truth for compliance.
 ## Coding Style
 
 Use Core wrappers instead of banned standard-library imports. In examples,
-import `. "dappco.re/go"` and print with `Println` or `Printf`; do not use
+import `. "github.com/dappcore/go"` and print with `Println` or `Printf`; do not use
 `fmt`. Keep package documentation and comments practical: explain ownership,
 lifetime, or call-boundary behavior rather than restating symbol names.
 

@@ -1,8 +1,8 @@
 package cgo_test
 
 import (
-	. "dappco.re/go"
-	cgo "dappco.re/go/cgo"
+	. "github.com/dappcore/go"
+	cgo "github.com/dappcore/go-cgo/go"
 )
 
 // ExampleScope shows a short-lived allocation group for C calls that need more

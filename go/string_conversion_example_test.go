@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	. "dappco.re/go"
-	cgo "dappco.re/go/cgo"
+	. "github.com/dappcore/go"
+	cgo "github.com/dappcore/go-cgo/go"
 )
 
 // ExampleSizeT converts Go sizes before passing them to C APIs with size_t

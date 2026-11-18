@@ -1,8 +1,8 @@
 package cgo_test
 
 import (
-	. "dappco.re/go"
-	cgo "dappco.re/go/cgo"
+	. "github.com/dappcore/go"
+	cgo "github.com/dappcore/go-cgo/go"
 )
 
 // ExampleCall_panic shows the guard that prevents dispatch through a nil C

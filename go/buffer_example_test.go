@@ -1,8 +1,8 @@
 package cgo_test
 
 import (
-	. "dappco.re/go"
-	cgo "dappco.re/go/cgo"
+	. "github.com/dappcore/go"
+	cgo "github.com/dappcore/go-cgo/go"
 )
 
 // ExampleBuffer shows the owned memory wrapper used when a C API needs a stable
