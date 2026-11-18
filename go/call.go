@@ -87,7 +87,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // Call invokes a C function pointer and maps a non-zero return code to a Core

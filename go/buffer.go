@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // Buffer owns byte memory that can be passed safely to C.

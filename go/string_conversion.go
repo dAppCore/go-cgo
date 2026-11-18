@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 type cStringAllocation struct {

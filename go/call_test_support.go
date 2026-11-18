@@ -147,7 +147,7 @@ import "C"
 import (
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 type testCInt = C.int

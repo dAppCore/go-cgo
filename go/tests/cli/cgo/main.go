@@ -29,8 +29,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	core "dappco.re/go"
-	corecgo "dappco.re/go/cgo"
+	core "github.com/dappcore/go"
+	corecgo "github.com/dappcore/go-cgo/go"
 )
 
 func main() {

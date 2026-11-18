@@ -18,7 +18,7 @@ ownership rules, and compliance enforced by the v0.9.0 audit script.
   arguments and converts the integer return code through `Errno`.
 - `*_test.go` files contain AX-style triplet tests for each public callable.
 - `*_example_test.go` files contain runnable examples with `Println` from
-  `dappco.re/go`.
+  `github.com/dappcore/go`.
 - `tests/cli/cgo/main.go` is the small AX-10 binary scenario used to exercise
   real cgo calls.
 
@@ -34,7 +34,7 @@ version-suffixed test files.
 The compliance audit bans direct imports of `fmt`, `errors`, `strings`, `path`,
 `path/filepath`, `os`, `os/exec`, `io/ioutil`, `log`, `encoding/json`, and
 `bytes` in every Go file, including examples. Use Core wrappers from
-`dappco.re/go` instead.
+`github.com/dappcore/go` instead.
 
 ## Verification
 

@@ -74,7 +74,7 @@ extern "C" void apply_layer_norm_2d(
 import "C"
 
 import (
-    core "dappco.re/go"
+    core "github.com/dappcore/go"
     "unsafe"
 )
 
@@ -95,7 +95,7 @@ func LayerNormPinned(in, out []float32, rows, cols int) {
 ```
 
 The include path (`-I${SRCDIR}/../../external/go-cgo/go`) assumes
-the consumer has `dappco.re/go/cgo` available as a git submodule at
+the consumer has `github.com/dappcore/go-cgo/go` available as a git submodule at
 `external/go-cgo` — the canonical layout go-mlx and go-inference
 already follow. For Go-module-only consumers (no submodule), copy
 `cgo_pinned_view.hpp` into the consumer's own cgo source tree; the

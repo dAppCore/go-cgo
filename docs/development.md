@@ -31,7 +31,7 @@ exercise the named symbol directly.
 
 Each production file also has a matching `_example_test.go` file. Examples must
 be runnable, must include accurate `// Output:` comments, and must print through
-`Println` or `Printf` from `. "dappco.re/go"`.
+`Println` or `Printf` from `. "github.com/dappcore/go"`.
 
 Go does not support importing `C` from test files. Shared cgo test fixtures live
 in ordinary package test support files, and external examples use exported
